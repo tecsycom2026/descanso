@@ -44,18 +44,26 @@
 <script>
 const supabase = window.supabase.createClient(
   "https://jxpeztieqwotfgswhzhx.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4cGV6dGllcXdvdGZnc3doemh4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA4MzQ4MDQsImV4cCI6MjA4NjQxMDgwNH0.Hf-lbGlP2OmH7Uh2LNKqwHkwHDp7yQV6O73aXw5NCZk"
+  "TU_ANON_KEY_AQUI"
 );
 
 const dias = ["lunes","martes","miercoles","jueves","viernes","sabado","domingo"];
 
+function escapeHtml(text) {
+  return (text || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 async function fetchData() {
   const { data, error } = await supabase.from("asistencia").select("*").order("nombre");
-
   console.log("DATA:", data);
   console.log("ERROR:", error);
-
-  render(data || []);
+  if (!data) return;
+  render(data);
 }
 
 function render(data) {
@@ -65,10 +73,10 @@ function render(data) {
   data.forEach(row => {
 
     let tr = `<tr class='border hover:bg-gray-50'>
-      <td><input value='${row.rol || ""}' onchange="updateField('${row.id}','rol',this.value)"></td>
-      <td><input value='${row.partner || ""}' onchange="updateField('${row.id}','partner',this.value)"></td>
-      <td><input value='${row.nombre || ""}' onchange="updateField('${row.id}','nombre',this.value)"></td>
-      <td><input value='${row.zona || ""}' onchange="updateField('${row.id}','zona',this.value)"></td>
+      <td><input value="${escapeHtml(row.rol)}" onchange="updateField('${row.id}','rol',this.value)"></td>
+      <td><input value="${escapeHtml(row.partner)}" onchange="updateField('${row.id}','partner',this.value)"></td>
+      <td><input value="${escapeHtml(row.nombre)}" onchange="updateField('${row.id}','nombre',this.value)"></td>
+      <td><input value="${escapeHtml(row.zona)}" onchange="updateField('${row.id}','zona',this.value)"></td>
     `;
 
     dias.forEach(dia => {
@@ -86,8 +94,8 @@ function render(data) {
 
     tr += `
       <td class='relative group'>
-        <input value='${row.comentario || ""}' onchange="updateField('${row.id}','comentario',this.value)">
-        ${row.comentario ? `<div class='absolute hidden group-hover:block bg-black text-white text-xs p-2 rounded -top-10'>${row.comentario}</div>` : ''}
+        <input value="${escapeHtml(row.comentario)}" onchange="updateField('${row.id}','comentario',this.value)">
+        ${row.comentario ? `<div class='absolute hidden group-hover:block bg-black text-white text-xs p-2 rounded -top-10'>${escapeHtml(row.comentario)}</div>` : ''}
       </td>
 
       <td>
@@ -118,26 +126,19 @@ async function addRow() {
   }]);
 
   console.log("ERROR INSERT:", error);
-
-  if (error) {
-    alert(error.message);
-  }
+  if (error) alert(error.message);
 }
 
 function exportExcel(){
   try {
     let table = document.querySelector("table").outerHTML;
-
     let blob = new Blob([table], { type: "application/vnd.ms-excel" });
-
     let a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
     a.download = "asistencia.xls";
-
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-
   } catch(e) {
     console.log("ERROR EXPORT:", e);
   }
