@@ -9,21 +9,10 @@
 </head>
 <body class="bg-gray-100">
 
-<!-- LOGIN -->
-<div id="login" class="flex items-center justify-center h-screen">
-  <div class="bg-white p-8 rounded-2xl shadow-xl w-80">
-    <h2 class="text-xl font-bold mb-4 text-center">Acceso Seguro</h2>
-    <input id="email" placeholder="Usuario" class="border p-2 mb-2 w-full rounded" />
-    <input id="password" type="password" placeholder="Clave" class="border p-2 mb-4 w-full rounded" />
-    <button onclick="login()" class="bg-blue-600 hover:bg-blue-700 text-white w-full py-2 rounded">Ingresar</button>
-  </div>
-</div>
-
-<!-- APP -->
-<div id="app" class="hidden p-4">
+<!-- APP DIRECTO SIN LOGIN -->
+<div id="app" class="p-4">
   <div class="flex justify-between items-center mb-4">
     <h1 class="text-2xl font-bold">Control de Asistencia</h1>
-    <button onclick="logout()" class="bg-red-500 text-white px-4 py-2 rounded">Salir</button>
   </div>
 
   <div class="flex gap-2 mb-4">
@@ -52,26 +41,6 @@
 
 <script>
 const supabase = window.supabase.createClient("https://jxpeztieqwotfgswhzhx.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4cGV6dGllcXdvdGZnc3doemh4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA4MzQ4MDQsImV4cCI6MjA4NjQxMDgwNH0.Hf-lbGlP2OmH7Uh2LNKqwHkwHDp7yQV6O73aXw5NCZk");
-
-async function login() {
-  const email = document.getElementById("email").value;
-  const password = document.getElementById("password").value;
-
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
-
-  if (error) return alert("Acceso denegado");
-
-  document.getElementById("login").classList.add("hidden");
-  document.getElementById("app").classList.remove("hidden");
-
-  fetchData();
-  realtime();
-}
-
-function logout(){
-  supabase.auth.signOut();
-  location.reload();
-}
 
 async function fetchData() {
   const { data } = await supabase.from("asistencia").select("*").order("nombre");
@@ -143,6 +112,9 @@ function exportExcel(){
   a.download = "asistencia.xls";
   a.click();
 }
+
+fetchData();
+realtime();
 </script>
 
 </body>
