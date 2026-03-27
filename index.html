@@ -1,1152 +1,149 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TECSYCOM — Telecomunicaciones</title>
-<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;500;600;700&family=Exo+2:ital,wght@0,100;0,300;0,400;0,700;1,300&display=swap" rel="stylesheet">
-<style>
-  :root {
-    --bg: #020a14;
-    --bg2: #04111f;
-    --panel: #071828;
-    --accent: #00d4ff;
-    --accent2: #0066cc;
-    --accent3: #ff6b00;
-    --text: #c8e0f4;
-    --text-dim: #5a7a99;
-    --white: #ffffff;
-    --glow: 0 0 30px rgba(0, 212, 255, 0.3);
-    --glow-strong: 0 0 60px rgba(0, 212, 255, 0.5);
-  }
-
-  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-
-  html { scroll-behavior: smooth; }
-
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'Exo 2', sans-serif;
-    font-weight: 300;
-    overflow-x: hidden;
-  }
-
-  /* GRID BACKGROUND */
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background-image:
-      linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
-    background-size: 60px 60px;
-    pointer-events: none;
-    z-index: 0;
-  }
-
-  /* NAV */
-  nav {
-    position: fixed;
-    top: 0; left: 0; right: 0;
-    z-index: 100;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1.2rem 5%;
-    background: rgba(2, 10, 20, 0.85);
-    backdrop-filter: blur(20px);
-    border-bottom: 1px solid rgba(0,212,255,0.1);
-  }
-
-  .logo {
-    font-family: 'Rajdhani', sans-serif;
-    font-weight: 700;
-    font-size: 1.8rem;
-    letter-spacing: 0.15em;
-    color: var(--white);
-  }
-
-  .logo span {
-    color: var(--accent);
-    text-shadow: var(--glow);
-  }
-
-  .logo-sub {
-    font-size: 0.55rem;
-    letter-spacing: 0.4em;
-    color: var(--text-dim);
-    display: block;
-    text-align: right;
-    font-family: 'Exo 2', sans-serif;
-    font-weight: 400;
-    margin-top: -2px;
-  }
-
-  nav ul {
-    display: flex;
-    gap: 2.5rem;
-    list-style: none;
-  }
-
-  nav ul a {
-    text-decoration: none;
-    color: var(--text-dim);
-    font-size: 0.8rem;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    font-weight: 400;
-    transition: color 0.3s, text-shadow 0.3s;
-  }
-
-  nav ul a:hover {
-    color: var(--accent);
-    text-shadow: var(--glow);
-  }
-
-  .nav-cta {
-    background: transparent;
-    border: 1px solid var(--accent);
-    color: var(--accent) !important;
-    padding: 0.5rem 1.2rem;
-    transition: background 0.3s, box-shadow 0.3s !important;
-  }
-
-  .nav-cta:hover {
-    background: rgba(0,212,255,0.1) !important;
-    box-shadow: var(--glow) !important;
-  }
-
-  /* HERO */
-  #hero {
-    position: relative;
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    padding: 0 5%;
-    overflow: hidden;
-  }
-
-  .hero-orb {
-    position: absolute;
-    border-radius: 50%;
-    filter: blur(120px);
-    opacity: 0.18;
-    animation: pulse 8s ease-in-out infinite;
-  }
-  .orb1 { width: 700px; height: 700px; background: var(--accent2); top: -200px; right: -100px; }
-  .orb2 { width: 400px; height: 400px; background: var(--accent); bottom: 0; left: 20%; animation-delay: 3s; }
-  .orb3 { width: 300px; height: 300px; background: var(--accent3); bottom: 100px; right: 10%; animation-delay: 5s; opacity: 0.1; }
-
-  @keyframes pulse {
-    0%, 100% { transform: scale(1); opacity: 0.18; }
-    50% { transform: scale(1.1); opacity: 0.25; }
-  }
-
-  .hero-content {
-    position: relative;
-    z-index: 2;
-    max-width: 750px;
-  }
-
-  .hero-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.6rem;
-    font-size: 0.7rem;
-    letter-spacing: 0.3em;
-    text-transform: uppercase;
-    color: var(--accent);
-    margin-bottom: 2rem;
-    opacity: 0;
-    animation: fadeUp 0.8s ease forwards 0.2s;
-  }
-
-  .hero-badge::before {
-    content: '';
-    display: block;
-    width: 40px; height: 1px;
-    background: var(--accent);
-    box-shadow: var(--glow);
-  }
-
-  .hero-title {
-    font-family: 'Rajdhani', sans-serif;
-    font-weight: 700;
-    font-size: clamp(3rem, 7vw, 5.5rem);
-    line-height: 1.0;
-    color: var(--white);
-    letter-spacing: 0.02em;
-    margin-bottom: 1.5rem;
-    opacity: 0;
-    animation: fadeUp 0.8s ease forwards 0.4s;
-  }
-
-  .hero-title .line-accent {
-    color: var(--accent);
-    text-shadow: var(--glow);
-  }
-
-  .hero-desc {
-    font-size: 1.05rem;
-    line-height: 1.8;
-    color: var(--text-dim);
-    max-width: 520px;
-    margin-bottom: 2.5rem;
-    opacity: 0;
-    animation: fadeUp 0.8s ease forwards 0.6s;
-  }
-
-  .hero-buttons {
-    display: flex;
-    gap: 1rem;
-    flex-wrap: wrap;
-    opacity: 0;
-    animation: fadeUp 0.8s ease forwards 0.8s;
-  }
-
-  .btn-primary {
-    background: var(--accent);
-    color: var(--bg);
-    padding: 0.85rem 2rem;
-    font-family: 'Rajdhani', sans-serif;
-    font-weight: 700;
-    font-size: 0.9rem;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    text-decoration: none;
-    transition: box-shadow 0.3s, transform 0.2s;
-    clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px));
-  }
-
-  .btn-primary:hover {
-    box-shadow: var(--glow-strong);
-    transform: translateY(-2px);
-  }
-
-  .btn-secondary {
-    background: transparent;
-    color: var(--text);
-    padding: 0.85rem 2rem;
-    font-family: 'Rajdhani', sans-serif;
-    font-weight: 600;
-    font-size: 0.9rem;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    text-decoration: none;
-    border: 1px solid rgba(0,212,255,0.25);
-    transition: border-color 0.3s, color 0.3s;
-    clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px));
-  }
-
-  .btn-secondary:hover {
-    border-color: var(--accent);
-    color: var(--accent);
-  }
-
-  /* Animated signal lines */
-  .signal-lines {
-    position: absolute;
-    right: 5%;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 380px;
-    height: 380px;
-    opacity: 0.5;
-  }
-
-  .signal-ring {
-    position: absolute;
-    border-radius: 50%;
-    border: 1px solid var(--accent);
-    top: 50%; left: 50%;
-    transform: translate(-50%, -50%) scale(0);
-    animation: ripple 4s ease-out infinite;
-  }
-
-  .signal-ring:nth-child(1) { width: 80px; height: 80px; animation-delay: 0s; }
-  .signal-ring:nth-child(2) { width: 160px; height: 160px; animation-delay: 1s; }
-  .signal-ring:nth-child(3) { width: 240px; height: 240px; animation-delay: 2s; }
-  .signal-ring:nth-child(4) { width: 320px; height: 320px; animation-delay: 3s; }
-
-  @keyframes ripple {
-    0% { transform: translate(-50%, -50%) scale(0); opacity: 0.8; }
-    100% { transform: translate(-50%, -50%) scale(1); opacity: 0; }
-  }
-
-  .signal-dot {
-    position: absolute;
-    top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-    width: 16px; height: 16px;
-    border-radius: 50%;
-    background: var(--accent);
-    box-shadow: 0 0 30px var(--accent), 0 0 60px var(--accent);
-  }
-
-  /* STATS BAR */
-  .stats-bar {
-    position: relative;
-    z-index: 2;
-    background: var(--panel);
-    border-top: 1px solid rgba(0,212,255,0.1);
-    border-bottom: 1px solid rgba(0,212,255,0.1);
-    padding: 2rem 5%;
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 1rem;
-  }
-
-  .stat-item {
-    text-align: center;
-    padding: 1rem;
-    border-right: 1px solid rgba(0,212,255,0.08);
-    opacity: 0;
-    animation: fadeUp 0.6s ease forwards;
-  }
-
-  .stat-item:last-child { border-right: none; }
-  .stat-item:nth-child(1) { animation-delay: 0.1s; }
-  .stat-item:nth-child(2) { animation-delay: 0.2s; }
-  .stat-item:nth-child(3) { animation-delay: 0.3s; }
-  .stat-item:nth-child(4) { animation-delay: 0.4s; }
-
-  .stat-number {
-    font-family: 'Rajdhani', sans-serif;
-    font-size: 2.5rem;
-    font-weight: 700;
-    color: var(--accent);
-    text-shadow: var(--glow);
-    display: block;
-  }
-
-  .stat-label {
-    font-size: 0.7rem;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: var(--text-dim);
-    margin-top: 0.3rem;
-  }
-
-  /* SECTIONS */
-  section {
-    position: relative;
-    z-index: 2;
-    padding: 6rem 5%;
-  }
-
-  .section-header {
-    margin-bottom: 4rem;
-  }
-
-  .section-tag {
-    font-size: 0.7rem;
-    letter-spacing: 0.35em;
-    text-transform: uppercase;
-    color: var(--accent);
-    display: flex;
-    align-items: center;
-    gap: 0.8rem;
-    margin-bottom: 1rem;
-  }
-
-  .section-tag::after {
-    content: '';
-    flex: 1;
-    max-width: 60px;
-    height: 1px;
-    background: var(--accent);
-    opacity: 0.5;
-  }
-
-  .section-title {
-    font-family: 'Rajdhani', sans-serif;
-    font-weight: 700;
-    font-size: clamp(2rem, 4vw, 3rem);
-    color: var(--white);
-    letter-spacing: 0.03em;
-    line-height: 1.1;
-  }
-
-  .section-title span { color: var(--accent); }
-
-  /* SERVICES */
-  #servicios { background: var(--bg2); }
-
-  .services-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1.5px;
-  }
-
-  .service-card {
-    background: var(--panel);
-    padding: 2.5rem 2rem;
-    position: relative;
-    overflow: hidden;
-    cursor: default;
-    transition: transform 0.3s;
-  }
-
-  .service-card::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0;
-    width: 100%; height: 3px;
-    background: linear-gradient(90deg, transparent, var(--accent), transparent);
-    transform: scaleX(0);
-    transition: transform 0.4s;
-  }
-
-  .service-card:hover { transform: translateY(-4px); }
-  .service-card:hover::before { transform: scaleX(1); }
-
-  .service-icon {
-    font-size: 2rem;
-    margin-bottom: 1.2rem;
-    display: block;
-    filter: drop-shadow(0 0 10px rgba(0,212,255,0.4));
-  }
-
-  .service-title {
-    font-family: 'Rajdhani', sans-serif;
-    font-size: 1.3rem;
-    font-weight: 600;
-    color: var(--white);
-    letter-spacing: 0.05em;
-    margin-bottom: 0.8rem;
-  }
-
-  .service-desc {
-    font-size: 0.88rem;
-    line-height: 1.7;
-    color: var(--text-dim);
-  }
-
-  .service-card-number {
-    position: absolute;
-    bottom: 1.5rem;
-    right: 1.5rem;
-    font-family: 'Rajdhani', sans-serif;
-    font-size: 3rem;
-    font-weight: 700;
-    color: rgba(0,212,255,0.05);
-    line-height: 1;
-  }
-
-  /* ABOUT */
-  #nosotros {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 6rem;
-    align-items: center;
-  }
-
-  .about-visual {
-    position: relative;
-    height: 450px;
-  }
-
-  .about-box {
-    position: absolute;
-    background: var(--panel);
-    border: 1px solid rgba(0,212,255,0.1);
-  }
-
-  .about-box-main {
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .about-box-main-inner {
-    text-align: center;
-  }
-
-  .big-number {
-    font-family: 'Rajdhani', sans-serif;
-    font-size: 8rem;
-    font-weight: 700;
-    color: var(--accent);
-    line-height: 1;
-    text-shadow: var(--glow-strong);
-  }
-
-  .big-label {
-    font-size: 0.7rem;
-    letter-spacing: 0.4em;
-    text-transform: uppercase;
-    color: var(--text-dim);
-  }
-
-  .about-box-corner {
-    width: 100px; height: 100px;
-    background: rgba(0,212,255,0.05);
-    border: 1px solid rgba(0,212,255,0.2);
-  }
-
-  .corner-tl { top: -15px; left: -15px; }
-  .corner-br { bottom: -15px; right: -15px; }
-
-  .about-line {
-    position: absolute;
-    background: var(--accent);
-    opacity: 0.2;
-  }
-  .about-line-h { height: 1px; left: 0; right: 0; }
-  .about-line-v { width: 1px; top: 0; bottom: 0; }
-  .about-line-h.top { top: 25%; }
-  .about-line-h.bot { bottom: 25%; }
-  .about-line-v.lft { left: 25%; }
-  .about-line-v.rgt { right: 25%; }
-
-  .about-content p {
-    font-size: 0.95rem;
-    line-height: 1.9;
-    color: var(--text-dim);
-    margin-bottom: 1.5rem;
-  }
-
-  .feature-list {
-    list-style: none;
-    margin-top: 2rem;
-  }
-
-  .feature-list li {
-    display: flex;
-    align-items: flex-start;
-    gap: 0.8rem;
-    font-size: 0.9rem;
-    color: var(--text);
-    margin-bottom: 1rem;
-  }
-
-  .feature-list li::before {
-    content: '▸';
-    color: var(--accent);
-    font-size: 0.8rem;
-    margin-top: 2px;
-    flex-shrink: 0;
-  }
-
-  /* WHY US */
-  #ventajas { background: var(--bg2); }
-
-  .ventajas-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 2rem;
-  }
-
-  .ventaja-item {
-    display: flex;
-    gap: 1.5rem;
-    padding: 2rem;
-    background: var(--panel);
-    border-left: 2px solid var(--accent);
-    transition: border-color 0.3s, background 0.3s;
-  }
-
-  .ventaja-item:hover {
-    background: rgba(0,212,255,0.04);
-    border-color: var(--accent3);
-  }
-
-  .ventaja-icon {
-    font-size: 1.8rem;
-    flex-shrink: 0;
-  }
-
-  .ventaja-title {
-    font-family: 'Rajdhani', sans-serif;
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: var(--white);
-    letter-spacing: 0.05em;
-    margin-bottom: 0.5rem;
-  }
-
-  .ventaja-desc {
-    font-size: 0.85rem;
-    line-height: 1.7;
-    color: var(--text-dim);
-  }
-
-  /* CONTACT */
-  #contacto {
-    background: var(--bg);
-    padding-bottom: 0;
-  }
-
-  .contact-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 5rem;
-    align-items: start;
-  }
-
-  .contact-info-item {
-    display: flex;
-    align-items: flex-start;
-    gap: 1rem;
-    margin-bottom: 2rem;
-  }
-
-  .contact-icon-wrap {
-    width: 44px; height: 44px;
-    border: 1px solid rgba(0,212,255,0.25);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.2rem;
-    flex-shrink: 0;
-    color: var(--accent);
-  }
-
-  .contact-info-label {
-    font-size: 0.65rem;
-    letter-spacing: 0.25em;
-    text-transform: uppercase;
-    color: var(--text-dim);
-    margin-bottom: 0.3rem;
-  }
-
-  .contact-info-value {
-    font-size: 0.95rem;
-    color: var(--white);
-  }
-
-  .contact-form {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-  }
-
-  .form-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1rem;
-  }
-
-  .form-group {
-    display: flex;
-    flex-direction: column;
-    gap: 0.4rem;
-  }
-
-  .form-group label {
-    font-size: 0.7rem;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: var(--text-dim);
-  }
-
-  .form-group input,
-  .form-group select,
-  .form-group textarea {
-    background: var(--panel);
-    border: 1px solid rgba(0,212,255,0.12);
-    color: var(--text);
-    padding: 0.75rem 1rem;
-    font-family: 'Exo 2', sans-serif;
-    font-size: 0.9rem;
-    outline: none;
-    transition: border-color 0.3s;
-    width: 100%;
-    resize: none;
-  }
-
-  .form-group input:focus,
-  .form-group select:focus,
-  .form-group textarea:focus {
-    border-color: var(--accent);
-    box-shadow: 0 0 15px rgba(0,212,255,0.1);
-  }
-
-  .form-group select option { background: var(--panel); }
-
-  .btn-submit {
-    background: var(--accent);
-    color: var(--bg);
-    border: none;
-    padding: 1rem 2rem;
-    font-family: 'Rajdhani', sans-serif;
-    font-weight: 700;
-    font-size: 0.95rem;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    cursor: pointer;
-    transition: box-shadow 0.3s;
-    clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 0 100%);
-    align-self: flex-start;
-    padding-right: 2.5rem;
-  }
-
-  .btn-submit:hover {
-    box-shadow: var(--glow-strong);
-  }
-
-  /* FOOTER */
-  footer {
-    position: relative;
-    z-index: 2;
-    background: var(--panel);
-    border-top: 1px solid rgba(0,212,255,0.1);
-    padding: 2rem 5%;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 1rem;
-  }
-
-  .footer-copy {
-    font-size: 0.75rem;
-    color: var(--text-dim);
-    letter-spacing: 0.1em;
-  }
-
-  .footer-links {
-    display: flex;
-    gap: 2rem;
-    list-style: none;
-  }
-
-  .footer-links a {
-    font-size: 0.7rem;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    color: var(--text-dim);
-    text-decoration: none;
-    transition: color 0.3s;
-  }
-
-  .footer-links a:hover { color: var(--accent); }
-
-  /* TICKER */
-  .ticker-wrap {
-    overflow: hidden;
-    background: rgba(0,212,255,0.05);
-    border-top: 1px solid rgba(0,212,255,0.1);
-    border-bottom: 1px solid rgba(0,212,255,0.1);
-    padding: 0.6rem 0;
-  }
-
-  .ticker {
-    display: flex;
-    white-space: nowrap;
-    animation: ticker 30s linear infinite;
-  }
-
-  .ticker-item {
-    font-size: 0.7rem;
-    letter-spacing: 0.25em;
-    text-transform: uppercase;
-    color: var(--text-dim);
-    padding: 0 3rem;
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-  }
-
-  .ticker-dot {
-    width: 4px; height: 4px;
-    border-radius: 50%;
-    background: var(--accent);
-    flex-shrink: 0;
-  }
-
-  @keyframes ticker {
-    0% { transform: translateX(0); }
-    100% { transform: translateX(-50%); }
-  }
-
-  /* ANIMATIONS */
-  @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(30px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  /* SCROLL REVEAL */
-  .reveal {
-    opacity: 0;
-    transform: translateY(30px);
-    transition: opacity 0.7s ease, transform 0.7s ease;
-  }
-
-  .reveal.visible {
-    opacity: 1;
-    transform: translateY(0);
-  }
-
-  /* HAMBURGER (mobile) */
-  .hamburger { display: none; flex-direction: column; gap: 5px; cursor: pointer; }
-  .hamburger span { width: 24px; height: 2px; background: var(--accent); display: block; transition: 0.3s; }
-
-  @media (max-width: 900px) {
-    nav ul { display: none; }
-    .hamburger { display: flex; }
-    .services-grid { grid-template-columns: 1fr; }
-    #nosotros { grid-template-columns: 1fr; }
-    .about-visual { display: none; }
-    .ventajas-grid { grid-template-columns: 1fr; }
-    .contact-grid { grid-template-columns: 1fr; }
-    .stats-bar { grid-template-columns: repeat(2,1fr); }
-    .signal-lines { display: none; }
-    .form-row { grid-template-columns: 1fr; }
-  }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Control Profesional de Asistencia</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
+<body class="bg-gray-100">
 
-<!-- NAV -->
-<nav>
-  <div class="logo">
-    TEC<span>SY</span>COM
-    <small class="logo-sub">Telecomunicaciones</small>
-  </div>
-  <ul>
-    <li><a href="#servicios">Servicios</a></li>
-    <li><a href="#nosotros">Nosotros</a></li>
-    <li><a href="#ventajas">¿Por qué elegirnos?</a></li>
-    <li><a href="#contacto" class="nav-cta">Contacto</a></li>
-  </ul>
-  <div class="hamburger"><span></span><span></span><span></span></div>
-</nav>
-
-<!-- HERO -->
-<section id="hero">
-  <div class="hero-orb orb1"></div>
-  <div class="hero-orb orb2"></div>
-  <div class="hero-orb orb3"></div>
-
-  <div class="hero-content">
-    <div class="hero-badge">Soluciones de Telecomunicaciones</div>
-    <h1 class="hero-title">
-      Conectando<br>
-      el <span class="line-accent">Futuro</span><br>
-      Digital
-    </h1>
-    <p class="hero-desc">
-      TECSYCOM diseña, implementa y mantiene infraestructuras de telecomunicaciones 
-      de alta disponibilidad para empresas que no se detienen.
-    </p>
-    <div class="hero-buttons">
-      <a href="#servicios" class="btn-primary">Ver Servicios</a>
-      <a href="#contacto" class="btn-secondary">Contáctanos</a>
-    </div>
-  </div>
-
-  <div class="signal-lines">
-    <div class="signal-ring"></div>
-    <div class="signal-ring"></div>
-    <div class="signal-ring"></div>
-    <div class="signal-ring"></div>
-    <div class="signal-dot"></div>
-  </div>
-</section>
-
-<!-- TICKER -->
-<div class="ticker-wrap">
-  <div class="ticker">
-    <div class="ticker-item"><span class="ticker-dot"></span> Fibra Óptica</div>
-    <div class="ticker-item"><span class="ticker-dot"></span> Redes IP</div>
-    <div class="ticker-item"><span class="ticker-dot"></span> CCTV & Seguridad</div>
-    <div class="ticker-item"><span class="ticker-dot"></span> Comunicaciones Unificadas</div>
-    <div class="ticker-item"><span class="ticker-dot"></span> Soporte 24/7</div>
-    <div class="ticker-item"><span class="ticker-dot"></span> Consultoría Tecnológica</div>
-    <div class="ticker-item"><span class="ticker-dot"></span> Cloud & Conectividad</div>
-    <div class="ticker-item"><span class="ticker-dot"></span> Fibra Óptica</div>
-    <div class="ticker-item"><span class="ticker-dot"></span> Redes IP</div>
-    <div class="ticker-item"><span class="ticker-dot"></span> CCTV & Seguridad</div>
-    <div class="ticker-item"><span class="ticker-dot"></span> Comunicaciones Unificadas</div>
-    <div class="ticker-item"><span class="ticker-dot"></span> Soporte 24/7</div>
-    <div class="ticker-item"><span class="ticker-dot"></span> Consultoría Tecnológica</div>
-    <div class="ticker-item"><span class="ticker-dot"></span> Cloud & Conectividad</div>
+<!-- LOGIN -->
+<div id="login" class="flex items-center justify-center h-screen">
+  <div class="bg-white p-8 rounded-2xl shadow-xl w-80">
+    <h2 class="text-xl font-bold mb-4 text-center">Acceso Seguro</h2>
+    <input id="email" placeholder="Usuario" class="border p-2 mb-2 w-full rounded" />
+    <input id="password" type="password" placeholder="Clave" class="border p-2 mb-4 w-full rounded" />
+    <button onclick="login()" class="bg-blue-600 hover:bg-blue-700 text-white w-full py-2 rounded">Ingresar</button>
   </div>
 </div>
 
-<!-- STATS -->
-<div class="stats-bar">
-  <div class="stat-item">
-    <span class="stat-number">+15</span>
-    <div class="stat-label">Años de Experiencia</div>
+<!-- APP -->
+<div id="app" class="hidden p-4">
+  <div class="flex justify-between items-center mb-4">
+    <h1 class="text-2xl font-bold">Control de Asistencia</h1>
+    <button onclick="logout()" class="bg-red-500 text-white px-4 py-2 rounded">Salir</button>
   </div>
-  <div class="stat-item">
-    <span class="stat-number">+500</span>
-    <div class="stat-label">Clientes Satisfechos</div>
+
+  <div class="flex gap-2 mb-4">
+    <button onclick="addRow()" class="bg-green-500 text-white px-4 py-2 rounded">➕ Agregar</button>
+    <button onclick="exportExcel()" class="bg-indigo-500 text-white px-4 py-2 rounded">📥 Exportar</button>
   </div>
-  <div class="stat-item">
-    <span class="stat-number">99.9%</span>
-    <div class="stat-label">Uptime Garantizado</div>
-  </div>
-  <div class="stat-item">
-    <span class="stat-number">24/7</span>
-    <div class="stat-label">Soporte Técnico</div>
+
+  <div class="overflow-x-auto bg-white rounded-xl shadow">
+    <table class="min-w-full text-sm">
+      <thead class="bg-gray-200">
+        <tr>
+          <th class="p-2">Nombre</th>
+          <script>
+            for (let i = 1; i <= 15; i++) {
+              document.write(`<th class='p-2'>${i}</th>`);
+            }
+          </script>
+          <th>Comentario</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody id="tabla"></tbody>
+    </table>
   </div>
 </div>
-
-<!-- SERVICES -->
-<section id="servicios">
-  <div class="section-header reveal">
-    <div class="section-tag">Nuestros Servicios</div>
-    <h2 class="section-title">Soluciones <span>integrales</span><br>de telecomunicaciones</h2>
-  </div>
-  <div class="services-grid">
-    <div class="service-card reveal">
-      <span class="service-icon">🔗</span>
-      <div class="service-title">Redes & Conectividad</div>
-      <div class="service-desc">Diseño e implementación de redes LAN, WAN y WLAN de alta velocidad. Configuración de routers, switches y equipos de conectividad empresarial.</div>
-      <div class="service-card-number">01</div>
-    </div>
-    <div class="service-card reveal">
-      <span class="service-icon">🛡️</span>
-      <div class="service-title">CCTV & Videovigilancia</div>
-      <div class="service-desc">Sistemas de seguridad IP con cámaras HD, almacenamiento en la nube y monitoreo remoto. Protege tus instalaciones con tecnología de punta.</div>
-      <div class="service-card-number">02</div>
-    </div>
-    <div class="service-card reveal">
-      <span class="service-icon">📡</span>
-      <div class="service-title">Fibra Óptica</div>
-      <div class="service-desc">Tendido e instalación de fibra óptica para empresas y data centers. Máxima velocidad y mínima latencia para tus operaciones críticas.</div>
-      <div class="service-card-number">03</div>
-    </div>
-    <div class="service-card reveal">
-      <span class="service-icon">☁️</span>
-      <div class="service-title">Cloud & VoIP</div>
-      <div class="service-desc">Migración a la nube y soluciones de telefonía IP. Reduce costos operativos y mejora la comunicación interna y externa de tu empresa.</div>
-      <div class="service-card-number">04</div>
-    </div>
-    <div class="service-card reveal">
-      <span class="service-icon">🔒</span>
-      <div class="service-title">Ciberseguridad</div>
-      <div class="service-desc">Firewalls, VPNs y control de acceso para proteger tu infraestructura digital. Auditorías de seguridad y gestión de vulnerabilidades.</div>
-      <div class="service-card-number">05</div>
-    </div>
-    <div class="service-card reveal">
-      <span class="service-icon">🔧</span>
-      <div class="service-title">Soporte & Mantenimiento</div>
-      <div class="service-desc">Servicio técnico preventivo y correctivo con tiempos de respuesta garantizados. Monitoreo proactivo para anticipar fallas antes de que ocurran.</div>
-      <div class="service-card-number">06</div>
-    </div>
-  </div>
-</section>
-
-<!-- ABOUT -->
-<section id="nosotros">
-  <div class="about-visual">
-    <div class="about-box about-box-main">
-      <div class="about-box-main-inner">
-        <div class="big-number">15+</div>
-        <div class="big-label">Años de trayectoria</div>
-      </div>
-    </div>
-    <div class="about-box about-box-corner corner-tl"></div>
-    <div class="about-box about-box-corner corner-br"></div>
-    <div class="about-line about-line-h top"></div>
-    <div class="about-line about-line-h bot"></div>
-    <div class="about-line about-line-v lft"></div>
-    <div class="about-line about-line-v rgt"></div>
-  </div>
-
-  <div class="about-content">
-    <div class="section-header reveal">
-      <div class="section-tag">Quiénes Somos</div>
-      <h2 class="section-title">Tecnología que <span>conecta</span><br>personas y negocios</h2>
-    </div>
-    <p class="reveal">TECSYCOM es una empresa peruana especializada en telecomunicaciones con más de 15 años de experiencia entregando soluciones tecnológicas confiables y escalables a empresas de todos los sectores.</p>
-    <p class="reveal">Nuestro equipo de ingenieros certificados trabaja de la mano con cada cliente para diseñar, implementar y dar soporte a infraestructuras de comunicaciones que impulsan su crecimiento.</p>
-    <ul class="feature-list reveal">
-      <li>Ingenieros certificados en Cisco, Huawei y Mikrotik</li>
-      <li>Proyectos llave en mano con gestión integral</li>
-      <li>Centro de monitoreo NOC disponible 24/7</li>
-      <li>Presencia en Lima y provincias del Perú</li>
-    </ul>
-  </div>
-</section>
-
-<!-- VENTAJAS -->
-<section id="ventajas">
-  <div class="section-header reveal">
-    <div class="section-tag">Nuestra Propuesta</div>
-    <h2 class="section-title">¿Por qué elegir <span>TECSYCOM</span>?</h2>
-  </div>
-  <div class="ventajas-grid">
-    <div class="ventaja-item reveal">
-      <div class="ventaja-icon">⚡</div>
-      <div>
-        <div class="ventaja-title">Respuesta Rápida</div>
-        <div class="ventaja-desc">Tiempos de atención garantizados en contrato. Nuestro equipo técnico está disponible para resolver incidencias en el menor tiempo posible.</div>
-      </div>
-    </div>
-    <div class="ventaja-item reveal">
-      <div class="ventaja-icon">🎯</div>
-      <div>
-        <div class="ventaja-title">Soluciones a Medida</div>
-        <div class="ventaja-desc">No usamos plantillas genéricas. Analizamos tu infraestructura actual y diseñamos una solución específica para tus necesidades y presupuesto.</div>
-      </div>
-    </div>
-    <div class="ventaja-item reveal">
-      <div class="ventaja-icon">📊</div>
-      <div>
-        <div class="ventaja-title">Monitoreo Proactivo</div>
-        <div class="ventaja-desc">Detectamos y resolvemos problemas antes de que impacten tus operaciones gracias a nuestro NOC con herramientas de monitoreo en tiempo real.</div>
-      </div>
-    </div>
-    <div class="ventaja-item reveal">
-      <div class="ventaja-icon">🤝</div>
-      <div>
-        <div class="ventaja-title">Alianza Estratégica</div>
-        <div class="ventaja-desc">Somos partners certificados de los principales fabricantes de telecomunicaciones. Accede a tecnología de punta con precios competitivos.</div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- CONTACT -->
-<section id="contacto">
-  <div class="contact-grid">
-    <div class="reveal">
-      <div class="section-header">
-        <div class="section-tag">Contáctanos</div>
-        <h2 class="section-title">Hablemos de tu<br><span>próximo proyecto</span></h2>
-      </div>
-      <div class="contact-info-item">
-        <div class="contact-icon-wrap">📍</div>
-        <div>
-          <div class="contact-info-label">Dirección</div>
-          <div class="contact-info-value">Lima, Perú</div>
-        </div>
-      </div>
-      <div class="contact-info-item">
-        <div class="contact-icon-wrap">📞</div>
-        <div>
-          <div class="contact-info-label">Teléfono</div>
-          <div class="contact-info-value">+51 (01) 000-0000</div>
-        </div>
-      </div>
-      <div class="contact-info-item">
-        <div class="contact-icon-wrap">✉️</div>
-        <div>
-          <div class="contact-info-label">Correo</div>
-          <div class="contact-info-value">contacto@tecsycom.pe</div>
-        </div>
-      </div>
-      <div class="contact-info-item">
-        <div class="contact-icon-wrap">🕐</div>
-        <div>
-          <div class="contact-info-label">Horario</div>
-          <div class="contact-info-value">Lun – Vie: 8:00 am – 6:00 pm</div>
-        </div>
-      </div>
-    </div>
-
-    <form class="contact-form reveal" onsubmit="handleSubmit(event)">
-      <div class="form-row">
-        <div class="form-group">
-          <label>Nombre</label>
-          <input type="text" placeholder="Tu nombre completo">
-        </div>
-        <div class="form-group">
-          <label>Empresa</label>
-          <input type="text" placeholder="Nombre de tu empresa">
-        </div>
-      </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label>Correo</label>
-          <input type="email" placeholder="correo@empresa.com">
-        </div>
-        <div class="form-group">
-          <label>Teléfono</label>
-          <input type="tel" placeholder="+51 999 999 999">
-        </div>
-      </div>
-      <div class="form-group">
-        <label>Servicio de Interés</label>
-        <select>
-          <option value="">Selecciona un servicio</option>
-          <option>Redes & Conectividad</option>
-          <option>CCTV & Videovigilancia</option>
-          <option>Fibra Óptica</option>
-          <option>Cloud & VoIP</option>
-          <option>Ciberseguridad</option>
-          <option>Soporte & Mantenimiento</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label>Mensaje</label>
-        <textarea rows="4" placeholder="Cuéntanos sobre tu proyecto o requerimiento..."></textarea>
-      </div>
-      <button type="submit" class="btn-submit">Enviar Mensaje →</button>
-    </form>
-  </div>
-</section>
-
-<!-- FOOTER -->
-<footer>
-  <div class="footer-copy">© 2025 TECSYCOM Telecomunicaciones. Todos los derechos reservados.</div>
-  <ul class="footer-links">
-    <li><a href="#servicios">Servicios</a></li>
-    <li><a href="#nosotros">Nosotros</a></li>
-    <li><a href="#contacto">Contacto</a></li>
-  </ul>
-</footer>
 
 <script>
-  // Scroll reveal
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach((entry, i) => {
-      if (entry.isIntersecting) {
-        setTimeout(() => entry.target.classList.add('visible'), i * 80);
-      }
-    });
-  }, { threshold: 0.1 });
+const supabase = window.supabase.createClient("https://YOUR_URL.supabase.co", "YOUR_ANON_KEY");
 
-  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+async function login() {
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
 
-  // Form submit
-  function handleSubmit(e) {
-    e.preventDefault();
-    const btn = e.target.querySelector('.btn-submit');
-    btn.textContent = '✔ Mensaje Enviado';
-    btn.style.background = '#00c46a';
-    setTimeout(() => {
-      btn.textContent = 'Enviar Mensaje →';
-      btn.style.background = '';
-    }, 3000);
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
+
+  if (error) return alert("Acceso denegado");
+
+  document.getElementById("login").classList.add("hidden");
+  document.getElementById("app").classList.remove("hidden");
+
+  fetchData();
+  realtime();
+}
+
+function logout(){
+  supabase.auth.signOut();
+  location.reload();
+}
+
+async function fetchData() {
+  const { data } = await supabase.from("asistencia").select("*").order("nombre");
+  render(data);
+}
+
+function render(data) {
+  const tabla = document.getElementById("tabla");
+  tabla.innerHTML = "";
+
+  data.forEach(row => {
+    let tr = `<tr class='border hover:bg-gray-50'>
+      <td class='p-1'><input class='w-full' value='${row.nombre || ""}' onchange="updateField('${row.id}','nombre',this.value)"></td>`;
+
+    for (let i = 1; i <= 15; i++) {
+      const val = row[`dia${i}`] || 'N';
+      const color = val === 'Y' ? 'bg-green-200' : 'bg-red-200';
+
+      tr += `
+      <td class='${color}'>
+        <select class='w-full bg-transparent' onchange="updateField('${row.id}','dia${i}',this.value)">
+          <option ${val==='Y'?'selected':''}>Y</option>
+          <option ${val==='N'?'selected':''}>N</option>
+        </select>
+      </td>`;
+    }
+
+    tr += `
+      <td class='relative group'>
+        <input class='w-full' value='${row.comentario || ""}' onchange="updateField('${row.id}','comentario',this.value)">
+        ${row.comentario ? `<div class='absolute hidden group-hover:block bg-black text-white text-xs p-2 rounded -top-10'>${row.comentario}</div>` : ''}
+      </td>
+      <td>
+        <button onclick="deleteRow('${row.id}')" class="bg-red-500 text-white px-2 py-1 rounded">❌</button>
+      </td>
+    </tr>`;
+
+    tabla.innerHTML += tr;
+  });
+}
+
+async function updateField(id, field, value) {
+  await supabase.from("asistencia").update({ [field]: value }).eq("id", id);
+}
+
+async function deleteRow(id) {
+  if(confirm("¿Eliminar registro?")){
+    await supabase.from("asistencia").delete().eq("id", id);
   }
+}
 
-  // Counter animation
-  function animateCount(el, target, suffix = '') {
-    let start = 0;
-    const duration = 2000;
-    const step = target / (duration / 16);
-    const timer = setInterval(() => {
-      start = Math.min(start + step, target);
-      el.textContent = (suffix === '%' ? start.toFixed(1) : Math.floor(start)) + suffix;
-      if (start >= target) clearInterval(timer);
-    }, 16);
-  }
+async function addRow() {
+  await supabase.from("asistencia").insert([{ nombre: "Nuevo" }]);
+}
 
-  const statsObserver = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        document.querySelectorAll('.stat-number').forEach(el => {
-          const text = el.textContent;
-          if (text.includes('+')) {
-            const num = parseInt(text.replace(/\D/g, ''));
-            animateCount(el, num, text.includes('500') ? '+' : '+');
-          }
-        });
-        statsObserver.disconnect();
-      }
-    });
-  }, { threshold: 0.5 });
+function realtime() {
+  supabase.channel('asistencia')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'asistencia' }, () => {
+      fetchData();
+    })
+    .subscribe();
+}
 
-  const statsBar = document.querySelector('.stats-bar');
-  if (statsBar) statsObserver.observe(statsBar);
+function exportExcel(){
+  let table = document.querySelector("table").outerHTML;
+  let blob = new Blob([table], { type: "application/vnd.ms-excel" });
+  let a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "asistencia.xls";
+  a.click();
+}
 </script>
+
 </body>
 </html>
