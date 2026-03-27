@@ -6,24 +6,27 @@
   <title>Control de Asistencia</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg:       #0f1117;
-      --surface:  #181c27;
-      --surface2: #1e2333;
-      --border:   rgba(255,255,255,0.07);
-      --border2:  rgba(255,255,255,0.12);
-      --accent:   #4f8ef7;
-      --accent-h: #3a7af0;
-      --success:  #22c55e;
-      --danger:   #ef4444;
-      --warning:  #f59e0b;
-      --purple:   #a78bfa;
-      --text:     #e2e8f0;
-      --text-2:   #94a3b8;
-      --text-3:   #475569;
-      --radius:   6px;
+      --bg:        #f0f4f9;
+      --surface:   #ffffff;
+      --surface2:  #f8fafc;
+      --surface3:  #eef2f7;
+      --border:    #dde3ec;
+      --border2:   #c8d3e0;
+      --accent:    #2563eb;
+      --accent-h:  #1d4ed8;
+      --success:   #16a34a;
+      --danger:    #dc2626;
+      --warning:   #d97706;
+      --purple:    #7c3aed;
+      --text:      #1e293b;
+      --text-2:    #475569;
+      --text-3:    #94a3b8;
+      --radius:    6px;
+      --shadow:    0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.1);
     }
 
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
@@ -36,263 +39,338 @@
       min-height: 100vh;
     }
 
-    /* HEADER */
+    /* ── HEADER ── */
     header {
       position: sticky; top: 0; z-index: 100;
-      background: rgba(15,17,23,0.97);
-      backdrop-filter: blur(12px);
+      background: var(--surface);
       border-bottom: 1px solid var(--border);
-      padding: 0 20px; height: 56px;
+      box-shadow: var(--shadow);
+      padding: 0 24px; height: 58px;
       display: flex; align-items: center; justify-content: space-between; gap: 12px;
     }
 
-    .logo { font-weight: 700; font-size: 15px; letter-spacing: -0.3px; color: #fff; white-space: nowrap; }
+    .logo {
+      font-weight: 700; font-size: 15px;
+      letter-spacing: -0.3px; color: var(--text);
+      display: flex; align-items: center; gap: 10px; white-space: nowrap;
+    }
+
+    .logo-icon {
+      width: 32px; height: 32px; border-radius: 8px;
+      background: var(--accent); color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+    }
+
     .logo span { color: var(--accent); }
 
     #status {
       display: flex; align-items: center; gap: 6px;
       font-size: 11px; font-weight: 500; color: var(--text-2);
       background: var(--surface2); border: 1px solid var(--border);
-      padding: 3px 10px; border-radius: 20px;
+      padding: 4px 12px; border-radius: 20px;
     }
-    #status .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text-3); flex-shrink: 0; }
+    #status .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text-3); flex-shrink: 0; }
+    #status.connected { color: var(--success); border-color: #bbf7d0; background: #f0fdf4; }
     #status.connected .dot { background: var(--success); box-shadow: 0 0 6px var(--success); animation: pdot 2s infinite; }
-    #status.error .dot    { background: var(--danger); }
-    #status.loading .dot  { background: var(--warning); animation: pdot 1s infinite; }
+    #status.error { color: var(--danger); border-color: #fecaca; background: #fef2f2; }
+    #status.error .dot { background: var(--danger); }
+    #status.loading .dot { background: var(--warning); animation: pdot 1s infinite; }
     @keyframes pdot { 0%,100%{opacity:1} 50%{opacity:0.3} }
 
     .header-actions { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 
-    /* BUTTONS */
+    /* ── BUTTONS ── */
     .btn {
       display: inline-flex; align-items: center; gap: 6px;
-      padding: 0 14px; height: 32px; border-radius: var(--radius);
+      padding: 0 14px; height: 34px; border-radius: var(--radius);
       font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 500;
-      cursor: pointer; border: none; transition: all 0.15s; white-space: nowrap;
+      cursor: pointer; border: 1px solid transparent;
+      transition: all 0.15s; white-space: nowrap; letter-spacing: 0.01em;
     }
     .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-    .btn-primary { background: var(--accent); color: #fff; }
-    .btn-primary:hover:not(:disabled) { background: var(--accent-h); }
-    .btn-ghost   { background: var(--surface2); color: var(--text); border: 1px solid var(--border2); }
-    .btn-ghost:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
-    .btn-danger  { background: rgba(239,68,68,0.12); color: var(--danger); border: 1px solid rgba(239,68,68,0.25); }
-    .btn-danger:hover:not(:disabled) { background: rgba(239,68,68,0.22); }
-    .btn-success { background: rgba(34,197,94,0.12); color: var(--success); border: 1px solid rgba(34,197,94,0.25); }
-    .btn-success:hover:not(:disabled) { background: rgba(34,197,94,0.22); }
-    .btn-purple  { background: rgba(167,139,250,0.12); color: var(--purple); border: 1px solid rgba(167,139,250,0.25); }
-    .btn-purple:hover:not(:disabled) { background: rgba(167,139,250,0.22); }
+
+    .btn-primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .btn-primary:hover:not(:disabled) { background: var(--accent-h); border-color: var(--accent-h); }
+
+    .btn-ghost { background: var(--surface); color: var(--text-2); border-color: var(--border2); }
+    .btn-ghost:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); background: #eff6ff; }
+
+    .btn-danger { background: #fef2f2; color: var(--danger); border-color: #fecaca; }
+    .btn-danger:hover:not(:disabled) { background: #fee2e2; }
+
+    .btn-success { background: #f0fdf4; color: var(--success); border-color: #bbf7d0; }
+    .btn-success:hover:not(:disabled) { background: #dcfce7; }
+
+    .btn-purple { background: #faf5ff; color: var(--purple); border-color: #ddd6fe; }
+    .btn-purple:hover:not(:disabled) { background: #ede9fe; }
 
     #fileInput { display: none; }
 
-    /* TOOLBAR */
+    /* ── TOOLBAR ── */
     .toolbar {
-      padding: 10px 20px; background: var(--surface);
+      padding: 10px 24px;
+      background: var(--surface);
       border-bottom: 1px solid var(--border);
       display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
     }
 
     .search-box {
       display: flex; align-items: center; gap: 6px;
-      background: var(--surface2); border: 1px solid var(--border2);
+      background: var(--surface2); border: 1px solid var(--border);
       border-radius: var(--radius); padding: 0 10px; height: 32px;
-      flex: 1; min-width: 150px; max-width: 260px;
+      flex: 1; min-width: 140px; max-width: 240px;
+      transition: border-color 0.15s;
     }
+    .search-box:focus-within { border-color: var(--accent); background: #fff; }
     .search-box input {
       background: transparent; border: none; outline: none;
       color: var(--text); font-size: 12px; font-family: 'Inter', sans-serif; width: 100%;
     }
     .search-box input::placeholder { color: var(--text-3); }
 
-    /* STATS */
+    /* ── STATS ── */
     .stats-row {
-      padding: 8px 20px; background: var(--bg);
+      padding: 8px 24px;
+      background: var(--surface2);
       border-bottom: 1px solid var(--border);
-      display: flex; gap: 16px; flex-wrap: wrap; align-items: center;
+      display: flex; gap: 20px; flex-wrap: wrap; align-items: center;
     }
-    .stat { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-2); }
-    .pill { padding: 1px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
-    .pill-blue  { background: rgba(79,142,247,0.15); color: var(--accent); }
-    .pill-green { background: rgba(34,197,94,0.15);  color: var(--success); }
-    .pill-red   { background: rgba(239,68,68,0.15);  color: var(--danger); }
-    .pill-amber { background: rgba(245,158,11,0.15); color: var(--warning); }
+    .stat { display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--text-2); }
+    .stat strong { font-size: 14px; font-weight: 700; color: var(--text); }
+    .pill { padding: 2px 9px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+    .pill-blue  { background: #dbeafe; color: #1d4ed8; }
+    .pill-green { background: #dcfce7; color: #15803d; }
+    .pill-red   { background: #fee2e2; color: #b91c1c; }
+    .pill-amber { background: #fef3c7; color: #b45309; }
 
-    /* TABLE */
-    .table-wrap { overflow-x: auto; overflow-y: auto; max-height: calc(100vh - 195px); }
+    /* ── TABLE WRAPPER ── */
+    .table-wrap {
+      margin: 16px 24px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
 
-    table { width: 100%; border-collapse: collapse; }
+    .table-scroll { overflow-x: auto; overflow-y: auto; max-height: calc(100vh - 220px); }
+
+    table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+
+    /* COLUMN WIDTHS — fixed for desktop */
+    col.c-num  { width: 42px; }
+    col.c-rol  { width: 130px; }
+    col.c-par  { width: 130px; }
+    col.c-nom  { width: 220px; }
+    col.c-zon  { width: 120px; }
+    col.c-day  { width: 54px; }
+    col.c-com  { width: 180px; }
+    col.c-act  { width: 44px; }
 
     thead { position: sticky; top: 0; z-index: 10; }
     thead th {
-      background: var(--surface); border-bottom: 1px solid var(--border2);
-      padding: 9px 10px; text-align: left;
-      font-size: 11px; font-weight: 600; letter-spacing: 0.5px;
-      text-transform: uppercase; color: var(--text-2); white-space: nowrap;
+      background: var(--surface3);
+      border-bottom: 2px solid var(--border2);
+      padding: 10px 10px;
+      text-align: left;
+      font-size: 11px; font-weight: 600;
+      letter-spacing: 0.5px; text-transform: uppercase;
+      color: var(--text-2); white-space: nowrap;
+      overflow: hidden; text-overflow: ellipsis;
     }
-    thead th.day-h { text-align: center; min-width: 52px; color: var(--accent); }
+    thead th.day-h {
+      text-align: center; color: var(--accent);
+    }
 
     tbody tr { border-bottom: 1px solid var(--border); transition: background 0.1s; }
-    tbody tr:hover { background: rgba(255,255,255,0.025); }
-    tbody td { padding: 3px 4px; vertical-align: middle; }
+    tbody tr:hover { background: #f8faff; }
+    tbody tr:last-child { border-bottom: none; }
+    tbody td { padding: 3px 5px; vertical-align: middle; overflow: hidden; }
 
+    /* ── CELL INPUT ── */
     .cell-inp {
       background: transparent; border: 1px solid transparent; border-radius: 4px;
-      color: var(--text); padding: 4px 7px;
-      font-family: 'Inter', sans-serif; font-size: 12px; width: 100%; outline: none;
-      transition: all 0.15s;
+      color: var(--text); padding: 5px 7px;
+      font-family: 'Inter', sans-serif; font-size: 12px;
+      width: 100%; outline: none; transition: all 0.15s;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     }
-    .cell-inp:hover { border-color: var(--border2); }
-    .cell-inp:focus { border-color: var(--accent); background: var(--surface2); }
+    .cell-inp:hover { border-color: var(--border); background: var(--surface2); }
+    .cell-inp:focus { border-color: var(--accent); background: #fff; box-shadow: 0 0 0 2px #dbeafe; }
     .cell-inp::placeholder { color: var(--text-3); }
 
-    /* DAY CELLS */
+    /* ── DAY CELLS ── */
     .day-td { text-align: center; padding: 0; transition: background 0.15s; }
-    .day-td.val-Y { background: rgba(34,197,94,0.13); }
-    .day-td.val-N { background: rgba(239,68,68,0.22); }
-    .day-td.val-L { background: rgba(245,158,11,0.13); }
+    .day-td.val-Y { background: #dcfce7; }
+    .day-td.val-N { background: #fee2e2; }
+    .day-td.val-L { background: #fef3c7; }
 
     .day-sel {
       appearance: none; background: transparent; border: none;
-      font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 600;
-      cursor: pointer; padding: 7px 0; width: 52px; text-align: center;
+      font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 500;
+      cursor: pointer; padding: 8px 0; width: 54px; text-align: center;
       outline: none; transition: color 0.1s;
     }
-    .day-td.val-Y .day-sel { color: #4ade80; }
-    .day-td.val-N .day-sel { color: #f87171; }
-    .day-td.val-L .day-sel { color: #fbbf24; }
+    .day-td.val-Y .day-sel { color: #15803d; }
+    .day-td.val-N .day-sel { color: #b91c1c; }
+    .day-td.val-L .day-sel { color: #b45309; }
 
+    /* ── DELETE BTN ── */
     .del-btn {
       display: inline-flex; align-items: center; justify-content: center;
       width: 28px; height: 28px; border: 1px solid transparent;
       border-radius: 4px; background: transparent; color: var(--text-3);
-      cursor: pointer; font-size: 14px; transition: all 0.15s;
+      cursor: pointer; font-size: 13px; transition: all 0.15s;
     }
-    .del-btn:hover { background: rgba(239,68,68,0.12); border-color: rgba(239,68,68,0.3); color: var(--danger); }
+    .del-btn:hover { background: #fee2e2; border-color: #fecaca; color: var(--danger); }
 
     tr.saving { opacity: 0.55; }
 
+    /* ── EMPTY ── */
     .empty { padding: 60px 20px; text-align: center; color: var(--text-3); font-size: 13px; }
 
-    /* TOAST */
+    /* ── TOAST ── */
     #toast {
       position: fixed; bottom: 24px; right: 24px; z-index: 9999;
-      background: var(--surface2); border: 1px solid var(--border2);
+      background: var(--surface); border: 1px solid var(--border2);
       border-left: 3px solid var(--accent); border-radius: var(--radius);
-      padding: 10px 16px; font-size: 12px; font-weight: 500; color: var(--text);
-      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+      padding: 11px 16px; font-size: 12px; font-weight: 500; color: var(--text);
+      box-shadow: var(--shadow-md);
       opacity: 0; transform: translateY(8px); transition: all 0.25s;
       pointer-events: none; max-width: 340px;
     }
-    #toast.show { opacity: 1; transform: translateY(0); }
-    #toast.t-ok   { border-left-color: var(--success); }
-    #toast.t-err  { border-left-color: var(--danger); }
-    #toast.t-warn { border-left-color: var(--warning); }
+    #toast.show  { opacity: 1; transform: translateY(0); }
+    #toast.t-ok  { border-left-color: var(--success); }
+    #toast.t-err { border-left-color: var(--danger); }
+    #toast.t-warn{ border-left-color: var(--warning); }
 
-    /* MODAL */
+    /* ── MODAL ── */
     .modal-overlay {
       display: none; position: fixed; inset: 0;
-      background: rgba(0,0,0,0.65); z-index: 500;
-      align-items: center; justify-content: center; backdrop-filter: blur(4px);
+      background: rgba(15,23,42,0.45); z-index: 500;
+      align-items: center; justify-content: center; backdrop-filter: blur(3px);
     }
     .modal-overlay.open { display: flex; }
     .modal {
-      background: var(--surface); border: 1px solid var(--border2);
-      border-radius: 10px; padding: 28px; max-width: 500px; width: 92%;
-      box-shadow: 0 24px 64px rgba(0,0,0,0.5);
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; padding: 28px; max-width: 460px; width: 92%;
+      box-shadow: var(--shadow-md);
     }
-    .modal h3 { font-size: 16px; font-weight: 600; margin-bottom: 8px; color: #fff; }
-    .modal p  { font-size: 13px; color: var(--text-2); margin-bottom: 20px; line-height: 1.6; }
+    .modal h3 { font-size: 16px; font-weight: 600; margin-bottom: 8px; color: var(--text); }
+    .modal p  { font-size: 13px; color: var(--text-2); margin-bottom: 20px; line-height: 1.65; }
     .modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
 
+    /* ── SPINNER ── */
     .spin {
       width: 14px; height: 14px;
-      border: 2px solid rgba(255,255,255,0.2); border-top-color: #fff;
-      border-radius: 50%; animation: spin 0.6s linear infinite; display: inline-block;
+      border: 2px solid var(--border2); border-top-color: var(--accent);
+      border-radius: 50%; animation: spin 0.65s linear infinite;
+      display: inline-block; flex-shrink: 0;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
+    /* ── SCROLLBAR ── */
     ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: var(--surface2); border-radius: 3px; }
-    ::-webkit-scrollbar-thumb:hover { background: var(--border2); }
+    ::-webkit-scrollbar-track { background: var(--surface2); }
+    ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 768px) {
+      header { padding: 0 14px; }
+      .toolbar { padding: 8px 14px; }
+      .stats-row { padding: 8px 14px; }
+      .table-wrap { margin: 10px 14px; }
+      table { table-layout: auto; }
+      col.c-rol, col.c-par, col.c-zon, col.c-com { width: auto; }
+    }
   </style>
 </head>
 <body>
 
 <!-- HEADER -->
 <header>
-  <div style="display:flex;align-items:center;gap:16px">
-    <div class="logo">Control de <span>Asistencia</span></div>
+  <div class="logo">
+    <div class="logo-icon">📋</div>
+    Control de <span>Asistencia</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
     <div id="status" class="loading">
       <div class="dot"></div>
       <span id="status-txt">Conectando...</span>
     </div>
-  </div>
-  <div class="header-actions">
-    <button class="btn btn-ghost" onclick="exportExcel()">
-      ↓ Exportar Excel
-    </button>
-    <button class="btn btn-purple" onclick="document.getElementById('fileInput').click()">
-      ↑ Importar Excel
-    </button>
-    <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" onchange="importExcel(event)">
-    <button class="btn btn-danger" onclick="showModal('modal-clear')">
-      ✕ Limpiar Todo
-    </button>
-    <button class="btn btn-success" onclick="showModal('modal-preload')">
-      + Cargar Personal
-    </button>
-    <button class="btn btn-primary" onclick="addRow()">
-      + Agregar Fila
-    </button>
+    <div class="header-actions">
+      <button class="btn btn-ghost" onclick="exportExcel()">↓ Exportar Excel</button>
+      <button class="btn btn-purple" onclick="document.getElementById('fileInput').click()">↑ Importar Excel</button>
+      <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" onchange="importExcel(event)">
+      <button class="btn btn-danger"  onclick="showModal('modal-clear')">✕ Limpiar Todo</button>
+      <button class="btn btn-success" onclick="showModal('modal-preload')">+ Cargar Personal</button>
+      <button class="btn btn-primary" onclick="addRow()">+ Agregar Fila</button>
+    </div>
   </div>
 </header>
 
-<!-- TOOLBAR / FILTROS -->
+<!-- FILTROS -->
 <div class="toolbar">
   <div class="search-box">
-    <input id="f-nombre"  placeholder="🔍 Buscar nombre..."  oninput="applyFilters()">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color:#94a3b8;flex-shrink:0"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input id="f-nombre"  placeholder="Buscar nombre..."  oninput="applyFilters()">
   </div>
   <div class="search-box">
-    <input id="f-partner" placeholder="Partner..."           oninput="applyFilters()">
+    <input id="f-partner" placeholder="Filtrar partner..." oninput="applyFilters()">
   </div>
   <div class="search-box">
-    <input id="f-zona"    placeholder="Zona..."              oninput="applyFilters()">
+    <input id="f-zona"    placeholder="Filtrar zona..."    oninput="applyFilters()">
   </div>
   <div class="search-box">
-    <input id="f-rol"     placeholder="Rol..."               oninput="applyFilters()">
+    <input id="f-rol"     placeholder="Filtrar rol..."     oninput="applyFilters()">
   </div>
 </div>
 
 <!-- STATS -->
 <div class="stats-row" id="stats-row">
-  <div class="stat"><div class="spin"></div>&nbsp;Cargando...</div>
+  <div class="stat"><div class="spin"></div>&nbsp;Cargando datos...</div>
 </div>
 
 <!-- TABLE -->
 <div class="table-wrap">
-  <table>
-    <thead>
-      <tr>
-        <th style="width:38px;text-align:center">#</th>
-        <th style="min-width:100px">Rol</th>
-        <th style="min-width:110px">Partner</th>
-        <th style="min-width:160px">Nombre</th>
-        <th style="min-width:100px">Zona</th>
-        <th class="day-h">Lun</th>
-        <th class="day-h">Mar</th>
-        <th class="day-h">Mié</th>
-        <th class="day-h">Jue</th>
-        <th class="day-h">Vie</th>
-        <th class="day-h">Sáb</th>
-        <th class="day-h">Dom</th>
-        <th style="min-width:160px">Comentario</th>
-        <th style="width:42px"></th>
-      </tr>
-    </thead>
-    <tbody id="tabla">
-      <tr><td colspan="14" class="empty"><div class="spin"></div></td></tr>
-    </tbody>
-  </table>
+  <div class="table-scroll">
+    <table>
+      <colgroup>
+        <col class="c-num">
+        <col class="c-rol">
+        <col class="c-par">
+        <col class="c-nom">
+        <col class="c-zon">
+        <col class="c-day"><col class="c-day"><col class="c-day">
+        <col class="c-day"><col class="c-day"><col class="c-day"><col class="c-day">
+        <col class="c-com">
+        <col class="c-act">
+      </colgroup>
+      <thead>
+        <tr>
+          <th style="text-align:center">#</th>
+          <th>Rol</th>
+          <th>Partner</th>
+          <th>Nombre</th>
+          <th>Zona</th>
+          <th class="day-h">Lun</th>
+          <th class="day-h">Mar</th>
+          <th class="day-h">Mié</th>
+          <th class="day-h">Jue</th>
+          <th class="day-h">Vie</th>
+          <th class="day-h">Sáb</th>
+          <th class="day-h">Dom</th>
+          <th>Comentario</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="tabla">
+        <tr><td colspan="14" class="empty"><div class="spin"></div></td></tr>
+      </tbody>
+    </table>
+  </div>
 </div>
 
 <div id="toast"></div>
@@ -301,9 +379,9 @@
 <div class="modal-overlay" id="modal-clear">
   <div class="modal">
     <h3>⚠️ Limpiar todos los registros</h3>
-    <p>Esta acción eliminará <strong>permanentemente</strong> todos los registros de la tabla de asistencia. No se puede deshacer.</p>
+    <p>Esta acción eliminará <strong>permanentemente</strong> todos los registros de asistencia. No se puede deshacer.</p>
     <div class="modal-actions">
-      <button class="btn btn-ghost" onclick="closeModal('modal-clear')">Cancelar</button>
+      <button class="btn btn-ghost"  onclick="closeModal('modal-clear')">Cancelar</button>
       <button class="btn btn-danger" id="btn-clear-ok" onclick="clearAll()">Sí, eliminar todo</button>
     </div>
   </div>
@@ -313,68 +391,46 @@
 <div class="modal-overlay" id="modal-preload">
   <div class="modal">
     <h3>👥 Cargar Personal Predefinido</h3>
-    <p>Se insertarán <strong>26 trabajadores</strong> con sus nombres completos. Los días quedarán en <strong style="color:var(--danger)">N</strong> por defecto. Podrás completar Rol, Partner y Zona directamente en la tabla.</p>
+    <p>Se insertarán <strong>26 trabajadores</strong> con sus nombres completos. Los días quedarán en <strong style="color:var(--danger)">N (Ausente)</strong> por defecto. Podrás completar Rol, Partner y Zona directamente en la tabla.</p>
     <div class="modal-actions">
-      <button class="btn btn-ghost" onclick="closeModal('modal-preload')">Cancelar</button>
+      <button class="btn btn-ghost"   onclick="closeModal('modal-preload')">Cancelar</button>
       <button class="btn btn-success" id="btn-preload-ok" onclick="preloadPersonal()">Insertar 26 personas</button>
     </div>
   </div>
 </div>
 
 <script>
-// ══════════════════════════════════════
-// SUPABASE
-// ══════════════════════════════════════
 const { createClient } = supabase;
 const sb = createClient(
   "https://jxpeztieqwotfgswhzhx.supabase.co",
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4cGV6dGllcXdvdGZnc3doemh4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA4MzQ4MDQsImV4cCI6MjA4NjQxMDgwNH0.Hf-lbGlP2OmH7Uh2LNKqwHkwHDp7yQV6O73aXw5NCZk"
 );
 
-// ══════════════════════════════════════
-// CONSTANTES
-// ══════════════════════════════════════
 const PERSONAL = [
-  "JOSEP ROBERTO FABIAN POMAZONGO",
-  "OLBER BRIAM POMZONGO OSCCO",
-  "MANUEL MARTIN JOEL YERSON",
-  "SERGIO MARTIN ALVARADO CACEDA",
-  "JONY STUAR ROMERO YLACHOQUE",
-  "EDISON PAGAN ATENCIO",
-  "EDWIN MARTIN VASQUEZ BENITES",
-  "YENSIS JOYNER GONZALEZ PERNIA",
-  "JHONATHAN BLADIMIR CAMACHO BRAVO",
-  "WIDNE WILBERT PEREZ FLORES",
-  "JUAN CARLOS ALBAN SANDOVAL",
-  "OMAR RUBENS PALOMINO GASPAR",
-  "DONATO PEREZ HUERTA",
-  "EFRAÍN TITO HUAMAN",
-  "ANDERSON JOSÉ LANDAETA GARCIA",
-  "ALAN YHOVANY BERNILLA CARLOS",
-  "CRUZ RAFAEL OSORIO HERNANDEZ",
-  "JANDY ANTUAN MATEO MATUS",
-  "FERNANDO JUNIOR FALCON FLORES",
-  "DIEGO ANDRE PEREZ ARBILDO",
-  "PEREZ CARRILLO BRANDON ALONSO",
-  "ALEXANDER AGUILAR TAIPE",
-  "LUIS ANGEL CARRION DIAZ",
-  "KEVIN ANDRÉS RUIZ ANASTACIO",
-  "CHAFLOQUE SIESQUEN JORGE JESUS",
-  "CENTURION BAUTISTA JOSE MERCEDES"
+  "JOSEP ROBERTO FABIAN POMAZONGO","OLBER BRIAM POMZONGO OSCCO",
+  "MANUEL MARTIN JOEL YERSON","SERGIO MARTIN ALVARADO CACEDA",
+  "JONY STUAR ROMERO YLACHOQUE","EDISON PAGAN ATENCIO",
+  "EDWIN MARTIN VASQUEZ BENITES","YENSIS JOYNER GONZALEZ PERNIA",
+  "JHONATHAN BLADIMIR CAMACHO BRAVO","WIDNE WILBERT PEREZ FLORES",
+  "JUAN CARLOS ALBAN SANDOVAL","OMAR RUBENS PALOMINO GASPAR",
+  "DONATO PEREZ HUERTA","EFRAÍN TITO HUAMAN",
+  "ANDERSON JOSÉ LANDAETA GARCIA","ALAN YHOVANY BERNILLA CARLOS",
+  "CRUZ RAFAEL OSORIO HERNANDEZ","JANDY ANTUAN MATEO MATUS",
+  "FERNANDO JUNIOR FALCON FLORES","DIEGO ANDRE PEREZ ARBILDO",
+  "PEREZ CARRILLO BRANDON ALONSO","ALEXANDER AGUILAR TAIPE",
+  "LUIS ANGEL CARRION DIAZ","KEVIN ANDRÉS RUIZ ANASTACIO",
+  "CHAFLOQUE SIESQUEN JORGE JESUS","CENTURION BAUTISTA JOSE MERCEDES"
 ];
 
 const DIAS = ["lunes","martes","miercoles","jueves","viernes","sabado","domingo"];
 
-let allData   = [];
+let allData = [];
 let saveTimers = {};
 
-// ══════════════════════════════════════
-// UTILITIES
-// ══════════════════════════════════════
-function toast(msg, type = "ok") {
+// ── UTILS ──
+function toast(msg, type="ok") {
   const el = document.getElementById("toast");
-  el.textContent = msg;
-  el.className = `show t-${type}`;
+  el.textContent = msg; el.className = `show t-${type}`;
   clearTimeout(window._tt);
   window._tt = setTimeout(() => el.className = "", 3500);
 }
@@ -386,13 +442,12 @@ function setStatus(cls, msg) {
 
 function showModal(id)  { document.getElementById(id).classList.add("open"); }
 function closeModal(id) { document.getElementById(id).classList.remove("open"); }
+
 document.querySelectorAll(".modal-overlay").forEach(el =>
   el.addEventListener("click", e => { if (e.target === el) el.classList.remove("open"); })
 );
 
-// ══════════════════════════════════════
-// FETCH
-// ══════════════════════════════════════
+// ── FETCH ──
 async function fetchData() {
   setStatus("loading", "Cargando...");
   const { data, error } = await sb.from("asistencia").select("*").order("nombre");
@@ -408,22 +463,18 @@ async function fetchData() {
   applyFilters();
 }
 
-// ══════════════════════════════════════
-// RENDER
-// ══════════════════════════════════════
+// ── RENDER ──
 function render(data) {
-  // Stats
-  let Y = 0, N = 0, L = 0;
+  let Y=0, N=0, L=0;
   data.forEach(r => DIAS.forEach(d => {
-    if (r[d] === "Y") Y++;
-    else if (r[d] === "L") L++;
-    else N++;
+    if(r[d]==="Y") Y++; else if(r[d]==="L") L++; else N++;
   }));
+
   document.getElementById("stats-row").innerHTML = `
     <div class="stat"><span class="pill pill-blue">${data.length}</span> personas</div>
-    <div class="stat"><span class="pill pill-green">${Y}</span> asistencias</div>
-    <div class="stat"><span class="pill pill-red">${N}</span> ausencias</div>
-    <div class="stat"><span class="pill pill-amber">${L}</span> licencias</div>
+    <div class="stat"><span class="pill pill-green">${Y}</span> asistencias (Y)</div>
+    <div class="stat"><span class="pill pill-red">${N}</span> ausencias (N)</div>
+    <div class="stat"><span class="pill pill-amber">${L}</span> licencias (L)</div>
   `;
 
   const tbody = document.getElementById("tabla");
@@ -433,29 +484,34 @@ function render(data) {
   }
 
   const frag = document.createDocumentFragment();
+
   data.forEach((row, i) => {
     const tr = document.createElement("tr");
     tr.dataset.id = row.id;
 
-    // Nro
+    // # número
     const tdi = document.createElement("td");
-    tdi.style.cssText = "text-align:center;color:var(--text-3);font-size:11px;padding:0 4px;font-variant-numeric:tabular-nums";
+    tdi.style.cssText = "text-align:center;color:var(--text-3);font-size:11px;font-weight:500";
     tdi.textContent = i + 1;
     tr.appendChild(tdi);
 
-    // Text fields
+    // Campos de texto
     ["rol","partner","nombre","zona"].forEach(f => {
       const td = document.createElement("td");
       const inp = document.createElement("input");
       inp.className = "cell-inp";
       inp.value = row[f] || "";
       inp.placeholder = f.charAt(0).toUpperCase() + f.slice(1);
-      inp.addEventListener("input", () => scheduleUpdate(row.id, f, inp.value, tr));
+      inp.title = row[f] || "";
+      inp.addEventListener("input", () => {
+        inp.title = inp.value;
+        scheduleUpdate(row.id, f, inp.value, tr);
+      });
       td.appendChild(inp);
       tr.appendChild(td);
     });
 
-    // Days
+    // Días
     DIAS.forEach(dia => {
       const val = row[dia] || "N";
       const td = document.createElement("td");
@@ -472,22 +528,26 @@ function render(data) {
         td.className = `day-td val-${sel.value}`;
         scheduleUpdate(row.id, dia, sel.value, tr);
       });
-      td.appendChild(sel);
-      tr.appendChild(td);
+      td.appendChild(sel); tr.appendChild(td);
     });
 
     // Comentario
     const tdc = document.createElement("td");
     const ic = document.createElement("input");
-    ic.className = "cell-inp"; ic.value = row.comentario || ""; ic.placeholder = "Comentario...";
-    ic.addEventListener("input", () => scheduleUpdate(row.id, "comentario", ic.value, tr));
+    ic.className = "cell-inp"; ic.value = row.comentario || "";
+    ic.placeholder = "Comentario..."; ic.title = row.comentario || "";
+    ic.addEventListener("input", () => {
+      ic.title = ic.value;
+      scheduleUpdate(row.id, "comentario", ic.value, tr);
+    });
     tdc.appendChild(ic); tr.appendChild(tdc);
 
-    // Delete
+    // Eliminar
     const tdd = document.createElement("td");
     tdd.style.textAlign = "center";
     const btn = document.createElement("button");
-    btn.className = "del-btn"; btn.title = "Eliminar"; btn.textContent = "✕";
+    btn.className = "del-btn"; btn.title = "Eliminar registro";
+    btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>`;
     btn.addEventListener("click", () => deleteRow(row.id, tr));
     tdd.appendChild(btn); tr.appendChild(tdd);
 
@@ -498,9 +558,7 @@ function render(data) {
   tbody.appendChild(frag);
 }
 
-// ══════════════════════════════════════
-// DEBOUNCED SAVE
-// ══════════════════════════════════════
+// ── SAVE DEBOUNCE ──
 function scheduleUpdate(id, field, value, tr) {
   const key = `${id}-${field}`;
   clearTimeout(saveTimers[key]);
@@ -516,9 +574,7 @@ function scheduleUpdate(id, field, value, tr) {
   }, 500);
 }
 
-// ══════════════════════════════════════
-// FILTERS
-// ══════════════════════════════════════
+// ── FILTERS ──
 function applyFilters() {
   const fn = document.getElementById("f-nombre").value.toLowerCase();
   const fp = document.getElementById("f-partner").value.toLowerCase();
@@ -534,9 +590,7 @@ function applyFilters() {
   setStatus("connected", `En línea · ${filtered.length}/${allData.length}`);
 }
 
-// ══════════════════════════════════════
-// ADD ROW
-// ══════════════════════════════════════
+// ── ADD ROW ──
 async function addRow() {
   const { error } = await sb.from("asistencia").insert([{
     nombre:"Nuevo", rol:"", partner:"", zona:"",
@@ -547,24 +601,18 @@ async function addRow() {
   else { toast("Fila agregada", "ok"); await fetchData(); }
 }
 
-// ══════════════════════════════════════
-// DELETE
-// ══════════════════════════════════════
+// ── DELETE ──
 async function deleteRow(id, tr) {
   if (!confirm("¿Eliminar este registro?")) return;
   const { error } = await sb.from("asistencia").delete().eq("id", id);
   if (error) toast("Error: " + error.message, "err");
   else {
     allData = allData.filter(r => r.id !== id);
-    tr.remove();
-    toast("Eliminado", "ok");
-    applyFilters();
+    tr.remove(); toast("Eliminado", "ok"); applyFilters();
   }
 }
 
-// ══════════════════════════════════════
-// CLEAR ALL
-// ══════════════════════════════════════
+// ── CLEAR ALL ──
 async function clearAll() {
   const btn = document.getElementById("btn-clear-ok");
   btn.disabled = true; btn.innerHTML = '<span class="spin"></span> Eliminando...';
@@ -575,9 +623,7 @@ async function clearAll() {
   else { toast("Todos los registros eliminados", "warn"); await fetchData(); }
 }
 
-// ══════════════════════════════════════
-// PRELOAD PERSONAL
-// ══════════════════════════════════════
+// ── PRELOAD PERSONAL ──
 async function preloadPersonal() {
   const btn = document.getElementById("btn-preload-ok");
   btn.disabled = true; btn.innerHTML = '<span class="spin"></span> Insertando...';
@@ -593,9 +639,7 @@ async function preloadPersonal() {
   else { toast(`${PERSONAL.length} personas insertadas ✓`, "ok"); await fetchData(); }
 }
 
-// ══════════════════════════════════════
-// EXPORT EXCEL
-// ══════════════════════════════════════
+// ── EXPORT EXCEL ──
 function exportExcel() {
   if (!allData.length) { toast("No hay datos para exportar", "warn"); return; }
   const headers = ["Rol","Partner","Nombre","Zona","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado","Domingo","Comentario"];
@@ -605,25 +649,23 @@ function exportExcel() {
     r.viernes||"N", r.sabado||"N", r.domingo||"N", r.comentario||""
   ]);
   const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
-  ws["!cols"] = [10,14,30,14,7,7,7,7,7,7,7,30].map(w => ({wch:w}));
+  ws["!cols"] = [12,16,32,14,7,7,7,7,7,7,7,32].map(w => ({wch:w}));
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "Asistencia");
   XLSX.writeFile(wb, `asistencia_${new Date().toISOString().slice(0,10)}.xlsx`);
-  toast("Exportado correctamente", "ok");
+  toast("Exportado correctamente ✓", "ok");
 }
 
-// ══════════════════════════════════════
-// IMPORT EXCEL
-// ══════════════════════════════════════
+// ── IMPORT EXCEL ──
 async function importExcel(event) {
   const file = event.target.files[0];
   if (!file) return;
   const reader = new FileReader();
   reader.onload = async (e) => {
     try {
-      const wb   = XLSX.read(e.target.result, { type: "array" });
-      const ws   = wb.Sheets[wb.SheetNames[0]];
-      const raw  = XLSX.utils.sheet_to_json(ws, { header: 1 });
+      const wb  = XLSX.read(e.target.result, { type: "array" });
+      const ws  = wb.Sheets[wb.SheetNames[0]];
+      const raw = XLSX.utils.sheet_to_json(ws, { header: 1 });
       if (raw.length < 2) { toast("El archivo está vacío", "warn"); return; }
 
       const hdrs = raw[0].map(h => String(h||"").toLowerCase().trim());
@@ -647,7 +689,7 @@ async function importExcel(event) {
           viernes:   day(r,["viernes","v","vie"]),
           sabado:    day(r,["sabado","sábado","s","sab"]),
           domingo:   day(r,["domingo","d","dom"]),
-          comentario:get(r,["comentario","comment","comments"])
+          comentario:get(r,["comentario","comment"])
         });
       }
       if (!rows.length) { toast("No se encontraron filas válidas", "warn"); return; }
@@ -662,20 +704,13 @@ async function importExcel(event) {
   event.target.value = "";
 }
 
-// ══════════════════════════════════════
-// REALTIME
-// ══════════════════════════════════════
-function startRealtime() {
-  sb.channel("asistencia-live")
-    .on("postgres_changes", { event: "*", schema: "public", table: "asistencia" }, () => {
-      fetchData();
-    })
-    .subscribe();
-}
+// ── REALTIME ──
+sb.channel("asistencia-live")
+  .on("postgres_changes", { event: "*", schema: "public", table: "asistencia" }, () => fetchData())
+  .subscribe();
 
 // INIT
 fetchData();
-startRealtime();
 </script>
 </body>
 </html>
