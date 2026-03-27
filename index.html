@@ -5,22 +5,25 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Control de Asistencia</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Exo+2:wght@300;400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #020a14;
-      --bg2: #04111f;
-      --panel: #071828;
-      --panel2: #0a2035;
-      --accent: #00d4ff;
-      --accent2: #0066cc;
-      --danger: #ff4444;
-      --success: #00c46a;
-      --warning: #ff9500;
-      --text: #c8e0f4;
-      --text-dim: #5a7a99;
-      --border: rgba(0,212,255,0.12);
-      --glow: 0 0 20px rgba(0,212,255,0.25);
+      --bg:       #0f1117;
+      --surface:  #181c27;
+      --surface2: #1e2333;
+      --border:   rgba(255,255,255,0.07);
+      --border2:  rgba(255,255,255,0.12);
+      --accent:   #4f8ef7;
+      --accent-h: #3a7af0;
+      --success:  #22c55e;
+      --danger:   #ef4444;
+      --warning:  #f59e0b;
+      --purple:   #a78bfa;
+      --text:     #e2e8f0;
+      --text-2:   #94a3b8;
+      --text-3:   #475569;
+      --radius:   6px;
     }
 
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
@@ -28,403 +31,368 @@
     body {
       background: var(--bg);
       color: var(--text);
-      font-family: 'Exo 2', sans-serif;
-      font-weight: 300;
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
       min-height: 100vh;
-    }
-
-    body::before {
-      content: '';
-      position: fixed;
-      inset: 0;
-      background-image:
-        linear-gradient(rgba(0,212,255,0.02) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0,212,255,0.02) 1px, transparent 1px);
-      background-size: 50px 50px;
-      pointer-events: none;
-      z-index: 0;
     }
 
     /* HEADER */
     header {
-      position: sticky;
-      top: 0;
-      z-index: 50;
-      background: rgba(2, 10, 20, 0.92);
-      backdrop-filter: blur(20px);
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(15,17,23,0.97);
+      backdrop-filter: blur(12px);
       border-bottom: 1px solid var(--border);
-      padding: 1rem 2rem;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 1rem;
-      flex-wrap: wrap;
+      padding: 0 20px; height: 56px;
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
     }
 
-    .header-title {
-      font-family: 'Rajdhani', sans-serif;
-      font-size: 1.5rem;
-      font-weight: 700;
-      letter-spacing: 0.1em;
-      color: #fff;
-    }
+    .logo { font-weight: 700; font-size: 15px; letter-spacing: -0.3px; color: #fff; white-space: nowrap; }
+    .logo span { color: var(--accent); }
 
-    .header-title span { color: var(--accent); text-shadow: var(--glow); }
-
-    .header-actions {
-      display: flex;
-      gap: 0.6rem;
-      align-items: center;
-      flex-wrap: wrap;
-    }
-
-    /* STATUS */
     #status {
-      font-size: 0.7rem;
-      letter-spacing: 0.15em;
-      padding: 0.3rem 0.8rem;
-      border-radius: 2px;
-      text-transform: uppercase;
-      font-weight: 500;
-      display: flex;
-      align-items: center;
-      gap: 0.4rem;
+      display: flex; align-items: center; gap: 6px;
+      font-size: 11px; font-weight: 500; color: var(--text-2);
+      background: var(--surface2); border: 1px solid var(--border);
+      padding: 3px 10px; border-radius: 20px;
     }
+    #status .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text-3); flex-shrink: 0; }
+    #status.connected .dot { background: var(--success); box-shadow: 0 0 6px var(--success); animation: pdot 2s infinite; }
+    #status.error .dot    { background: var(--danger); }
+    #status.loading .dot  { background: var(--warning); animation: pdot 1s infinite; }
+    @keyframes pdot { 0%,100%{opacity:1} 50%{opacity:0.3} }
 
-    #status::before {
-      content: '';
-      width: 6px; height: 6px;
-      border-radius: 50%;
-      background: var(--text-dim);
-      flex-shrink: 0;
-    }
-
-    #status.connected { color: var(--success); border: 1px solid rgba(0,196,106,0.3); }
-    #status.connected::before { background: var(--success); box-shadow: 0 0 8px var(--success); animation: blink 2s infinite; }
-    #status.error { color: var(--danger); border: 1px solid rgba(255,68,68,0.3); }
-    #status.error::before { background: var(--danger); }
-    #status.loading { color: var(--text-dim); border: 1px solid var(--border); }
-
-    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.4} }
+    .header-actions { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 
     /* BUTTONS */
     .btn {
-      font-family: 'Rajdhani', sans-serif;
-      font-weight: 600;
-      font-size: 0.8rem;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      padding: 0.5rem 1.1rem;
-      border: none;
-      cursor: pointer;
-      transition: all 0.2s;
-      display: flex;
-      align-items: center;
-      gap: 0.4rem;
-      clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 0 14px; height: 32px; border-radius: var(--radius);
+      font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 500;
+      cursor: pointer; border: none; transition: all 0.15s; white-space: nowrap;
     }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover:not(:disabled) { background: var(--accent-h); }
+    .btn-ghost   { background: var(--surface2); color: var(--text); border: 1px solid var(--border2); }
+    .btn-ghost:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+    .btn-danger  { background: rgba(239,68,68,0.12); color: var(--danger); border: 1px solid rgba(239,68,68,0.25); }
+    .btn-danger:hover:not(:disabled) { background: rgba(239,68,68,0.22); }
+    .btn-success { background: rgba(34,197,94,0.12); color: var(--success); border: 1px solid rgba(34,197,94,0.25); }
+    .btn-success:hover:not(:disabled) { background: rgba(34,197,94,0.22); }
+    .btn-purple  { background: rgba(167,139,250,0.12); color: var(--purple); border: 1px solid rgba(167,139,250,0.25); }
+    .btn-purple:hover:not(:disabled) { background: rgba(167,139,250,0.22); }
 
-    .btn-add { background: var(--accent); color: var(--bg); }
-    .btn-add:hover { box-shadow: var(--glow); transform: translateY(-1px); }
+    #fileInput { display: none; }
 
-    .btn-export { background: var(--panel2); color: var(--text); border: 1px solid var(--border); clip-path: none; }
-    .btn-export:hover { border-color: var(--accent); color: var(--accent); }
-
-    /* FILTERS */
-    .filters {
-      position: relative;
-      z-index: 2;
-      padding: 0.8rem 2rem;
-      background: var(--bg2);
+    /* TOOLBAR */
+    .toolbar {
+      padding: 10px 20px; background: var(--surface);
       border-bottom: 1px solid var(--border);
-      display: flex;
-      gap: 0.8rem;
-      flex-wrap: wrap;
-      align-items: center;
+      display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
     }
 
-    .filter-label {
-      font-size: 0.65rem;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      color: var(--text-dim);
+    .search-box {
+      display: flex; align-items: center; gap: 6px;
+      background: var(--surface2); border: 1px solid var(--border2);
+      border-radius: var(--radius); padding: 0 10px; height: 32px;
+      flex: 1; min-width: 150px; max-width: 260px;
     }
-
-    .filter-input {
-      background: var(--panel);
-      border: 1px solid var(--border);
-      color: var(--text);
-      padding: 0.4rem 0.8rem;
-      font-family: 'Exo 2', sans-serif;
-      font-size: 0.82rem;
-      outline: none;
-      transition: border-color 0.2s;
-      min-width: 160px;
+    .search-box input {
+      background: transparent; border: none; outline: none;
+      color: var(--text); font-size: 12px; font-family: 'Inter', sans-serif; width: 100%;
     }
+    .search-box input::placeholder { color: var(--text-3); }
 
-    .filter-input:focus { border-color: var(--accent); }
-    .filter-input::placeholder { color: var(--text-dim); }
-
-    /* MAIN */
-    main {
-      position: relative;
-      z-index: 2;
-      padding: 1.5rem 2rem;
-    }
-
-    /* SUMMARY BAR */
-    .summary-bar {
-      display: flex;
-      gap: 1rem;
-      margin-bottom: 1.2rem;
-      flex-wrap: wrap;
-    }
-
-    .summary-chip {
-      font-size: 0.7rem;
-      letter-spacing: 0.15em;
-      text-transform: uppercase;
-      color: var(--text-dim);
-      background: var(--panel);
-      border: 1px solid var(--border);
-      padding: 0.35rem 0.8rem;
-    }
-
-    .summary-chip strong { color: var(--accent); font-family: 'Rajdhani', sans-serif; font-size: 1rem; margin-right: 0.3rem; }
-
-    /* TABLE WRAPPER */
-    .table-wrap {
-      background: var(--panel);
-      border: 1px solid var(--border);
-      overflow-x: auto;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.82rem;
-    }
-
-    thead tr {
-      background: var(--panel2);
+    /* STATS */
+    .stats-row {
+      padding: 8px 20px; background: var(--bg);
       border-bottom: 1px solid var(--border);
+      display: flex; gap: 16px; flex-wrap: wrap; align-items: center;
     }
+    .stat { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-2); }
+    .pill { padding: 1px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+    .pill-blue  { background: rgba(79,142,247,0.15); color: var(--accent); }
+    .pill-green { background: rgba(34,197,94,0.15);  color: var(--success); }
+    .pill-red   { background: rgba(239,68,68,0.15);  color: var(--danger); }
+    .pill-amber { background: rgba(245,158,11,0.15); color: var(--warning); }
 
-    th {
-      font-family: 'Rajdhani', sans-serif;
-      font-weight: 600;
-      font-size: 0.7rem;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      color: var(--text-dim);
-      padding: 0.75rem 0.6rem;
-      text-align: left;
-      white-space: nowrap;
+    /* TABLE */
+    .table-wrap { overflow-x: auto; overflow-y: auto; max-height: calc(100vh - 195px); }
+
+    table { width: 100%; border-collapse: collapse; }
+
+    thead { position: sticky; top: 0; z-index: 10; }
+    thead th {
+      background: var(--surface); border-bottom: 1px solid var(--border2);
+      padding: 9px 10px; text-align: left;
+      font-size: 11px; font-weight: 600; letter-spacing: 0.5px;
+      text-transform: uppercase; color: var(--text-2); white-space: nowrap;
     }
+    thead th.day-h { text-align: center; min-width: 52px; color: var(--accent); }
 
-    th.day-th {
-      text-align: center;
-      color: var(--accent);
-      min-width: 44px;
-    }
+    tbody tr { border-bottom: 1px solid var(--border); transition: background 0.1s; }
+    tbody tr:hover { background: rgba(255,255,255,0.025); }
+    tbody td { padding: 3px 4px; vertical-align: middle; }
 
-    tbody tr {
-      border-bottom: 1px solid rgba(0,212,255,0.05);
-      transition: background 0.15s;
-    }
-
-    tbody tr:hover { background: rgba(0,212,255,0.03); }
-
-    td {
-      padding: 0.35rem 0.4rem;
-      vertical-align: middle;
-    }
-
-    /* CELL INPUTS */
-    .cell-input {
-      background: transparent;
-      border: 1px solid transparent;
-      color: var(--text);
-      padding: 0.3rem 0.5rem;
-      font-family: 'Exo 2', sans-serif;
-      font-size: 0.82rem;
-      width: 100%;
-      min-width: 80px;
-      outline: none;
-      transition: border-color 0.2s, background 0.2s;
-    }
-
-    .cell-input:focus, .cell-input:hover {
-      border-color: var(--border);
-      background: var(--panel2);
-    }
-
-    /* DAY SELECT */
-    .day-cell {
-      text-align: center;
-      padding: 0.2rem;
-    }
-
-    .day-select {
-      appearance: none;
-      border: none;
-      font-family: 'Rajdhani', sans-serif;
-      font-weight: 700;
-      font-size: 0.82rem;
-      letter-spacing: 0.05em;
-      cursor: pointer;
-      padding: 0.3rem 0.5rem;
-      border-radius: 2px;
-      width: 48px;
-      text-align: center;
+    .cell-inp {
+      background: transparent; border: 1px solid transparent; border-radius: 4px;
+      color: var(--text); padding: 4px 7px;
+      font-family: 'Inter', sans-serif; font-size: 12px; width: 100%; outline: none;
       transition: all 0.15s;
-      outline: none;
     }
+    .cell-inp:hover { border-color: var(--border2); }
+    .cell-inp:focus { border-color: var(--accent); background: var(--surface2); }
+    .cell-inp::placeholder { color: var(--text-3); }
 
-    .day-Y { background: rgba(0,196,106,0.15); color: #00e07a; border: 1px solid rgba(0,196,106,0.3); }
-    .day-N { background: rgba(255,68,68,0.1); color: #ff6666; border: 1px solid rgba(255,68,68,0.2); }
-    .day-L { background: rgba(255,149,0,0.1); color: #ffaa33; border: 1px solid rgba(255,149,0,0.2); }
+    /* DAY CELLS */
+    .day-td { text-align: center; padding: 0; transition: background 0.15s; }
+    .day-td.val-Y { background: rgba(34,197,94,0.13); }
+    .day-td.val-N { background: rgba(239,68,68,0.22); }
+    .day-td.val-L { background: rgba(245,158,11,0.13); }
 
-    /* DELETE BTN */
-    .btn-del {
-      background: transparent;
-      border: 1px solid rgba(255,68,68,0.3);
-      color: var(--danger);
-      padding: 0.25rem 0.5rem;
-      font-size: 0.75rem;
-      cursor: pointer;
-      transition: all 0.2s;
-      font-family: 'Rajdhani', sans-serif;
-      letter-spacing: 0.05em;
+    .day-sel {
+      appearance: none; background: transparent; border: none;
+      font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 600;
+      cursor: pointer; padding: 7px 0; width: 52px; text-align: center;
+      outline: none; transition: color 0.1s;
     }
-    .btn-del:hover { background: rgba(255,68,68,0.15); border-color: var(--danger); }
+    .day-td.val-Y .day-sel { color: #4ade80; }
+    .day-td.val-N .day-sel { color: #f87171; }
+    .day-td.val-L .day-sel { color: #fbbf24; }
 
-    /* SAVE indicator */
-    .saving { opacity: 0.5; }
-
-    /* EMPTY STATE */
-    .empty-state {
-      text-align: center;
-      padding: 4rem 2rem;
-      color: var(--text-dim);
+    .del-btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 28px; height: 28px; border: 1px solid transparent;
+      border-radius: 4px; background: transparent; color: var(--text-3);
+      cursor: pointer; font-size: 14px; transition: all 0.15s;
     }
-    .empty-state svg { opacity: 0.2; margin-bottom: 1rem; }
-    .empty-state p { font-size: 0.85rem; letter-spacing: 0.1em; }
+    .del-btn:hover { background: rgba(239,68,68,0.12); border-color: rgba(239,68,68,0.3); color: var(--danger); }
+
+    tr.saving { opacity: 0.55; }
+
+    .empty { padding: 60px 20px; text-align: center; color: var(--text-3); font-size: 13px; }
 
     /* TOAST */
     #toast {
-      position: fixed;
-      bottom: 2rem;
-      right: 2rem;
-      z-index: 999;
-      font-family: 'Rajdhani', sans-serif;
-      font-size: 0.85rem;
-      letter-spacing: 0.1em;
-      padding: 0.7rem 1.2rem;
-      border-left: 3px solid var(--accent);
-      background: var(--panel2);
-      color: var(--text);
-      opacity: 0;
-      transform: translateY(10px);
-      transition: all 0.3s;
-      pointer-events: none;
-      max-width: 320px;
+      position: fixed; bottom: 24px; right: 24px; z-index: 9999;
+      background: var(--surface2); border: 1px solid var(--border2);
+      border-left: 3px solid var(--accent); border-radius: var(--radius);
+      padding: 10px 16px; font-size: 12px; font-weight: 500; color: var(--text);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+      opacity: 0; transform: translateY(8px); transition: all 0.25s;
+      pointer-events: none; max-width: 340px;
     }
     #toast.show { opacity: 1; transform: translateY(0); }
-    #toast.toast-ok { border-color: var(--success); color: var(--success); }
-    #toast.toast-err { border-color: var(--danger); color: var(--danger); }
+    #toast.t-ok   { border-left-color: var(--success); }
+    #toast.t-err  { border-left-color: var(--danger); }
+    #toast.t-warn { border-left-color: var(--warning); }
 
-    /* SPINNER */
-    .spinner {
-      width: 16px; height: 16px;
-      border: 2px solid var(--border);
-      border-top-color: var(--accent);
-      border-radius: 50%;
-      animation: spin 0.7s linear infinite;
-      display: inline-block;
+    /* MODAL */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.65); z-index: 500;
+      align-items: center; justify-content: center; backdrop-filter: blur(4px);
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: var(--surface); border: 1px solid var(--border2);
+      border-radius: 10px; padding: 28px; max-width: 500px; width: 92%;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.5);
+    }
+    .modal h3 { font-size: 16px; font-weight: 600; margin-bottom: 8px; color: #fff; }
+    .modal p  { font-size: 13px; color: var(--text-2); margin-bottom: 20px; line-height: 1.6; }
+    .modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
+
+    .spin {
+      width: 14px; height: 14px;
+      border: 2px solid rgba(255,255,255,0.2); border-top-color: #fff;
+      border-radius: 50%; animation: spin 0.6s linear infinite; display: inline-block;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
+
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--surface2); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--border2); }
   </style>
 </head>
 <body>
 
+<!-- HEADER -->
 <header>
-  <div class="header-title">CONTROL DE <span>ASISTENCIA</span></div>
+  <div style="display:flex;align-items:center;gap:16px">
+    <div class="logo">Control de <span>Asistencia</span></div>
+    <div id="status" class="loading">
+      <div class="dot"></div>
+      <span id="status-txt">Conectando...</span>
+    </div>
+  </div>
   <div class="header-actions">
-    <span id="status" class="loading">Conectando...</span>
-    <button class="btn btn-export" onclick="exportExcel()">📥 Exportar XLS</button>
-    <button class="btn btn-add" onclick="addRow()">➕ Agregar</button>
+    <button class="btn btn-ghost" onclick="exportExcel()">
+      ↓ Exportar Excel
+    </button>
+    <button class="btn btn-purple" onclick="document.getElementById('fileInput').click()">
+      ↑ Importar Excel
+    </button>
+    <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" onchange="importExcel(event)">
+    <button class="btn btn-danger" onclick="showModal('modal-clear')">
+      ✕ Limpiar Todo
+    </button>
+    <button class="btn btn-success" onclick="showModal('modal-preload')">
+      + Cargar Personal
+    </button>
+    <button class="btn btn-primary" onclick="addRow()">
+      + Agregar Fila
+    </button>
   </div>
 </header>
 
-<div class="filters">
-  <span class="filter-label">Filtrar:</span>
-  <input class="filter-input" id="f-nombre" placeholder="Nombre..." oninput="applyFilters()">
-  <input class="filter-input" id="f-partner" placeholder="Partner..." oninput="applyFilters()">
-  <input class="filter-input" id="f-zona" placeholder="Zona..." oninput="applyFilters()">
-  <input class="filter-input" id="f-rol" placeholder="Rol..." oninput="applyFilters()">
+<!-- TOOLBAR / FILTROS -->
+<div class="toolbar">
+  <div class="search-box">
+    <input id="f-nombre"  placeholder="🔍 Buscar nombre..."  oninput="applyFilters()">
+  </div>
+  <div class="search-box">
+    <input id="f-partner" placeholder="Partner..."           oninput="applyFilters()">
+  </div>
+  <div class="search-box">
+    <input id="f-zona"    placeholder="Zona..."              oninput="applyFilters()">
+  </div>
+  <div class="search-box">
+    <input id="f-rol"     placeholder="Rol..."               oninput="applyFilters()">
+  </div>
 </div>
 
-<main>
-  <div class="summary-bar" id="summary"></div>
-  <div class="table-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th>Rol</th>
-          <th>Partner</th>
-          <th>Nombre</th>
-          <th>Zona</th>
-          <th class="day-th">L</th>
-          <th class="day-th">M</th>
-          <th class="day-th">Mi</th>
-          <th class="day-th">J</th>
-          <th class="day-th">V</th>
-          <th class="day-th">S</th>
-          <th class="day-th">D</th>
-          <th>Comentario</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody id="tabla">
-        <tr><td colspan="13"><div class="empty-state"><div class="spinner"></div></div></td></tr>
-      </tbody>
-    </table>
-  </div>
-</main>
+<!-- STATS -->
+<div class="stats-row" id="stats-row">
+  <div class="stat"><div class="spin"></div>&nbsp;Cargando...</div>
+</div>
+
+<!-- TABLE -->
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th style="width:38px;text-align:center">#</th>
+        <th style="min-width:100px">Rol</th>
+        <th style="min-width:110px">Partner</th>
+        <th style="min-width:160px">Nombre</th>
+        <th style="min-width:100px">Zona</th>
+        <th class="day-h">Lun</th>
+        <th class="day-h">Mar</th>
+        <th class="day-h">Mié</th>
+        <th class="day-h">Jue</th>
+        <th class="day-h">Vie</th>
+        <th class="day-h">Sáb</th>
+        <th class="day-h">Dom</th>
+        <th style="min-width:160px">Comentario</th>
+        <th style="width:42px"></th>
+      </tr>
+    </thead>
+    <tbody id="tabla">
+      <tr><td colspan="14" class="empty"><div class="spin"></div></td></tr>
+    </tbody>
+  </table>
+</div>
 
 <div id="toast"></div>
 
+<!-- MODAL: LIMPIAR TODO -->
+<div class="modal-overlay" id="modal-clear">
+  <div class="modal">
+    <h3>⚠️ Limpiar todos los registros</h3>
+    <p>Esta acción eliminará <strong>permanentemente</strong> todos los registros de la tabla de asistencia. No se puede deshacer.</p>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-clear')">Cancelar</button>
+      <button class="btn btn-danger" id="btn-clear-ok" onclick="clearAll()">Sí, eliminar todo</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: CARGAR PERSONAL -->
+<div class="modal-overlay" id="modal-preload">
+  <div class="modal">
+    <h3>👥 Cargar Personal Predefinido</h3>
+    <p>Se insertarán <strong>26 trabajadores</strong> con sus nombres completos. Los días quedarán en <strong style="color:var(--danger)">N</strong> por defecto. Podrás completar Rol, Partner y Zona directamente en la tabla.</p>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-preload')">Cancelar</button>
+      <button class="btn btn-success" id="btn-preload-ok" onclick="preloadPersonal()">Insertar 26 personas</button>
+    </div>
+  </div>
+</div>
+
 <script>
+// ══════════════════════════════════════
+// SUPABASE
+// ══════════════════════════════════════
 const { createClient } = supabase;
 const sb = createClient(
   "https://jxpeztieqwotfgswhzhx.supabase.co",
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4cGV6dGllcXdvdGZnc3doemh4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA4MzQ4MDQsImV4cCI6MjA4NjQxMDgwNH0.Hf-lbGlP2OmH7Uh2LNKqwHkwHDp7yQV6O73aXw5NCZk"
 );
 
-const DIAS = ["lunes","martes","miercoles","jueves","viernes","sabado","domingo"];
-const DIAS_LABEL = ["L","M","Mi","J","V","S","D"];
+// ══════════════════════════════════════
+// CONSTANTES
+// ══════════════════════════════════════
+const PERSONAL = [
+  "JOSEP ROBERTO FABIAN POMAZONGO",
+  "OLBER BRIAM POMZONGO OSCCO",
+  "MANUEL MARTIN JOEL YERSON",
+  "SERGIO MARTIN ALVARADO CACEDA",
+  "JONY STUAR ROMERO YLACHOQUE",
+  "EDISON PAGAN ATENCIO",
+  "EDWIN MARTIN VASQUEZ BENITES",
+  "YENSIS JOYNER GONZALEZ PERNIA",
+  "JHONATHAN BLADIMIR CAMACHO BRAVO",
+  "WIDNE WILBERT PEREZ FLORES",
+  "JUAN CARLOS ALBAN SANDOVAL",
+  "OMAR RUBENS PALOMINO GASPAR",
+  "DONATO PEREZ HUERTA",
+  "EFRAÍN TITO HUAMAN",
+  "ANDERSON JOSÉ LANDAETA GARCIA",
+  "ALAN YHOVANY BERNILLA CARLOS",
+  "CRUZ RAFAEL OSORIO HERNANDEZ",
+  "JANDY ANTUAN MATEO MATUS",
+  "FERNANDO JUNIOR FALCON FLORES",
+  "DIEGO ANDRE PEREZ ARBILDO",
+  "PEREZ CARRILLO BRANDON ALONSO",
+  "ALEXANDER AGUILAR TAIPE",
+  "LUIS ANGEL CARRION DIAZ",
+  "KEVIN ANDRÉS RUIZ ANASTACIO",
+  "CHAFLOQUE SIESQUEN JORGE JESUS",
+  "CENTURION BAUTISTA JOSE MERCEDES"
+];
 
-let allData = [];
+const DIAS = ["lunes","martes","miercoles","jueves","viernes","sabado","domingo"];
+
+let allData   = [];
 let saveTimers = {};
 
-// ─── TOAST ───────────────────────────────────────────
+// ══════════════════════════════════════
+// UTILITIES
+// ══════════════════════════════════════
 function toast(msg, type = "ok") {
   const el = document.getElementById("toast");
   el.textContent = msg;
-  el.className = `show toast-${type}`;
-  clearTimeout(window._toastTimer);
-  window._toastTimer = setTimeout(() => el.className = "", 3000);
+  el.className = `show t-${type}`;
+  clearTimeout(window._tt);
+  window._tt = setTimeout(() => el.className = "", 3500);
 }
 
-// ─── ESCAPE ───────────────────────────────────────────
-function esc(t) {
-  return String(t || "")
-    .replace(/&/g,"&amp;").replace(/</g,"&lt;")
-    .replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+function setStatus(cls, msg) {
+  document.getElementById("status").className = cls;
+  document.getElementById("status-txt").textContent = msg;
 }
 
-// ─── FETCH ────────────────────────────────────────────
+function showModal(id)  { document.getElementById(id).classList.add("open"); }
+function closeModal(id) { document.getElementById(id).classList.remove("open"); }
+document.querySelectorAll(".modal-overlay").forEach(el =>
+  el.addEventListener("click", e => { if (e.target === el) el.classList.remove("open"); })
+);
+
+// ══════════════════════════════════════
+// FETCH
+// ══════════════════════════════════════
 async function fetchData() {
   setStatus("loading", "Cargando...");
   const { data, error } = await sb.from("asistencia").select("*").order("nombre");
@@ -432,7 +400,7 @@ async function fetchData() {
     setStatus("error", "Error de conexión");
     toast("Error: " + error.message, "err");
     document.getElementById("tabla").innerHTML =
-      `<tr><td colspan="13"><div class="empty-state"><p>No se pudo conectar con Supabase</p></div></td></tr>`;
+      `<tr><td colspan="14" class="empty">No se pudo conectar con Supabase</td></tr>`;
     return;
   }
   allData = data || [];
@@ -440,108 +408,99 @@ async function fetchData() {
   applyFilters();
 }
 
-// ─── STATUS ───────────────────────────────────────────
-function setStatus(type, msg) {
-  const el = document.getElementById("status");
-  el.className = type;
-  el.textContent = msg;
-}
-
-// ─── RENDER ───────────────────────────────────────────
+// ══════════════════════════════════════
+// RENDER
+// ══════════════════════════════════════
 function render(data) {
-  const tbody = document.getElementById("tabla");
-
-  // Summary
-  const total = data.length;
-  const presentes = data.reduce((acc, r) =>
-    acc + DIAS.filter(d => r[d] === "Y").length, 0);
-  const ausentes = data.reduce((acc, r) =>
-    acc + DIAS.filter(d => r[d] === "N").length, 0);
-
-  document.getElementById("summary").innerHTML = `
-    <div class="summary-chip"><strong>${total}</strong> Personas</div>
-    <div class="summary-chip"><strong>${presentes}</strong> Asistencias</div>
-    <div class="summary-chip"><strong>${ausentes}</strong> Ausencias</div>
+  // Stats
+  let Y = 0, N = 0, L = 0;
+  data.forEach(r => DIAS.forEach(d => {
+    if (r[d] === "Y") Y++;
+    else if (r[d] === "L") L++;
+    else N++;
+  }));
+  document.getElementById("stats-row").innerHTML = `
+    <div class="stat"><span class="pill pill-blue">${data.length}</span> personas</div>
+    <div class="stat"><span class="pill pill-green">${Y}</span> asistencias</div>
+    <div class="stat"><span class="pill pill-red">${N}</span> ausencias</div>
+    <div class="stat"><span class="pill pill-amber">${L}</span> licencias</div>
   `;
 
-  if (data.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="13"><div class="empty-state"><p>Sin registros. Usa "Agregar" para crear uno.</p></div></td></tr>`;
+  const tbody = document.getElementById("tabla");
+  if (!data.length) {
+    tbody.innerHTML = `<tr><td colspan="14" class="empty">Sin registros. Usa "Cargar Personal" o "Agregar Fila".</td></tr>`;
     return;
   }
 
-  const fragment = document.createDocumentFragment();
-
-  data.forEach(row => {
+  const frag = document.createDocumentFragment();
+  data.forEach((row, i) => {
     const tr = document.createElement("tr");
     tr.dataset.id = row.id;
 
+    // Nro
+    const tdi = document.createElement("td");
+    tdi.style.cssText = "text-align:center;color:var(--text-3);font-size:11px;padding:0 4px;font-variant-numeric:tabular-nums";
+    tdi.textContent = i + 1;
+    tr.appendChild(tdi);
+
     // Text fields
-    const textFields = ["rol","partner","nombre","zona"];
-    textFields.forEach(field => {
+    ["rol","partner","nombre","zona"].forEach(f => {
       const td = document.createElement("td");
       const inp = document.createElement("input");
-      inp.className = "cell-input";
-      inp.value = row[field] || "";
-      inp.placeholder = field.charAt(0).toUpperCase() + field.slice(1);
-      inp.addEventListener("input", () => scheduleUpdate(row.id, field, inp.value, tr));
+      inp.className = "cell-inp";
+      inp.value = row[f] || "";
+      inp.placeholder = f.charAt(0).toUpperCase() + f.slice(1);
+      inp.addEventListener("input", () => scheduleUpdate(row.id, f, inp.value, tr));
       td.appendChild(inp);
       tr.appendChild(td);
     });
 
-    // Day selects
+    // Days
     DIAS.forEach(dia => {
       const val = row[dia] || "N";
       const td = document.createElement("td");
-      td.className = "day-cell";
+      td.className = `day-td val-${val}`;
       const sel = document.createElement("select");
-      sel.className = `day-select day-${val}`;
-
+      sel.className = "day-sel";
       ["Y","N","L"].forEach(opt => {
         const o = document.createElement("option");
-        o.value = opt;
-        o.textContent = opt;
+        o.value = opt; o.textContent = opt;
         if (opt === val) o.selected = true;
         sel.appendChild(o);
       });
-
       sel.addEventListener("change", () => {
-        sel.className = `day-select day-${sel.value}`;
+        td.className = `day-td val-${sel.value}`;
         scheduleUpdate(row.id, dia, sel.value, tr);
       });
-
       td.appendChild(sel);
       tr.appendChild(td);
     });
 
     // Comentario
-    const tdCom = document.createElement("td");
-    const inpCom = document.createElement("input");
-    inpCom.className = "cell-input";
-    inpCom.style.minWidth = "140px";
-    inpCom.value = row.comentario || "";
-    inpCom.placeholder = "Comentario...";
-    inpCom.addEventListener("input", () => scheduleUpdate(row.id, "comentario", inpCom.value, tr));
-    tdCom.appendChild(inpCom);
-    tr.appendChild(tdCom);
+    const tdc = document.createElement("td");
+    const ic = document.createElement("input");
+    ic.className = "cell-inp"; ic.value = row.comentario || ""; ic.placeholder = "Comentario...";
+    ic.addEventListener("input", () => scheduleUpdate(row.id, "comentario", ic.value, tr));
+    tdc.appendChild(ic); tr.appendChild(tdc);
 
     // Delete
-    const tdDel = document.createElement("td");
+    const tdd = document.createElement("td");
+    tdd.style.textAlign = "center";
     const btn = document.createElement("button");
-    btn.className = "btn-del";
-    btn.textContent = "✕";
-    btn.title = "Eliminar";
+    btn.className = "del-btn"; btn.title = "Eliminar"; btn.textContent = "✕";
     btn.addEventListener("click", () => deleteRow(row.id, tr));
-    tdDel.appendChild(btn);
-    tr.appendChild(tdDel);
+    tdd.appendChild(btn); tr.appendChild(tdd);
 
-    fragment.appendChild(tr);
+    frag.appendChild(tr);
   });
 
   tbody.innerHTML = "";
-  tbody.appendChild(fragment);
+  tbody.appendChild(frag);
 }
 
-// ─── DEBOUNCED UPDATE ─────────────────────────────────
+// ══════════════════════════════════════
+// DEBOUNCED SAVE
+// ══════════════════════════════════════
 function scheduleUpdate(id, field, value, tr) {
   const key = `${id}-${field}`;
   clearTimeout(saveTimers[key]);
@@ -549,110 +508,172 @@ function scheduleUpdate(id, field, value, tr) {
   saveTimers[key] = setTimeout(async () => {
     const { error } = await sb.from("asistencia").update({ [field]: value }).eq("id", id);
     tr.classList.remove("saving");
-    if (error) {
-      toast("Error al guardar: " + error.message, "err");
+    if (error) toast("Error al guardar: " + error.message, "err");
+    else {
+      const idx = allData.findIndex(r => r.id === id);
+      if (idx !== -1) allData[idx][field] = value;
     }
-    // Update local cache
-    const idx = allData.findIndex(r => r.id === id);
-    if (idx !== -1) allData[idx][field] = value;
-  }, 600);
+  }, 500);
 }
 
-// ─── ADD ROW ──────────────────────────────────────────
-async function addRow() {
-  const btn = document.querySelector(".btn-add");
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spinner"></span>';
-
-  const { error } = await sb.from("asistencia").insert([{
-    nombre: "Nuevo", rol: "", partner: "", zona: "",
-    lunes:"N", martes:"N", miercoles:"N", jueves:"N",
-    viernes:"N", sabado:"N", domingo:"N", comentario:""
-  }]);
-
-  btn.disabled = false;
-  btn.innerHTML = "➕ Agregar";
-
-  if (error) {
-    toast("Error al agregar: " + error.message, "err");
-  } else {
-    toast("Registro agregado", "ok");
-    await fetchData();
-  }
-}
-
-// ─── DELETE ROW ───────────────────────────────────────
-async function deleteRow(id, tr) {
-  if (!confirm("¿Eliminar este registro?")) return;
-  const { error } = await sb.from("asistencia").delete().eq("id", id);
-  if (error) {
-    toast("Error al eliminar: " + error.message, "err");
-  } else {
-    allData = allData.filter(r => r.id !== id);
-    tr.remove();
-    toast("Registro eliminado", "ok");
-    applyFilters();
-  }
-}
-
-// ─── FILTERS ──────────────────────────────────────────
+// ══════════════════════════════════════
+// FILTERS
+// ══════════════════════════════════════
 function applyFilters() {
   const fn = document.getElementById("f-nombre").value.toLowerCase();
   const fp = document.getElementById("f-partner").value.toLowerCase();
   const fz = document.getElementById("f-zona").value.toLowerCase();
   const fr = document.getElementById("f-rol").value.toLowerCase();
-
   const filtered = allData.filter(r =>
     (r.nombre||"").toLowerCase().includes(fn) &&
     (r.partner||"").toLowerCase().includes(fp) &&
     (r.zona||"").toLowerCase().includes(fz) &&
     (r.rol||"").toLowerCase().includes(fr)
   );
-
   render(filtered);
-  setStatus("connected", `En línea · ${filtered.length}/${allData.length} registros`);
+  setStatus("connected", `En línea · ${filtered.length}/${allData.length}`);
 }
 
-// ─── EXPORT EXCEL ─────────────────────────────────────
+// ══════════════════════════════════════
+// ADD ROW
+// ══════════════════════════════════════
+async function addRow() {
+  const { error } = await sb.from("asistencia").insert([{
+    nombre:"Nuevo", rol:"", partner:"", zona:"",
+    lunes:"N", martes:"N", miercoles:"N", jueves:"N",
+    viernes:"N", sabado:"N", domingo:"N", comentario:""
+  }]);
+  if (error) toast("Error: " + error.message, "err");
+  else { toast("Fila agregada", "ok"); await fetchData(); }
+}
+
+// ══════════════════════════════════════
+// DELETE
+// ══════════════════════════════════════
+async function deleteRow(id, tr) {
+  if (!confirm("¿Eliminar este registro?")) return;
+  const { error } = await sb.from("asistencia").delete().eq("id", id);
+  if (error) toast("Error: " + error.message, "err");
+  else {
+    allData = allData.filter(r => r.id !== id);
+    tr.remove();
+    toast("Eliminado", "ok");
+    applyFilters();
+  }
+}
+
+// ══════════════════════════════════════
+// CLEAR ALL
+// ══════════════════════════════════════
+async function clearAll() {
+  const btn = document.getElementById("btn-clear-ok");
+  btn.disabled = true; btn.innerHTML = '<span class="spin"></span> Eliminando...';
+  const { error } = await sb.from("asistencia").delete().neq("id","00000000-0000-0000-0000-000000000000");
+  btn.disabled = false; btn.textContent = "Sí, eliminar todo";
+  closeModal("modal-clear");
+  if (error) toast("Error: " + error.message, "err");
+  else { toast("Todos los registros eliminados", "warn"); await fetchData(); }
+}
+
+// ══════════════════════════════════════
+// PRELOAD PERSONAL
+// ══════════════════════════════════════
+async function preloadPersonal() {
+  const btn = document.getElementById("btn-preload-ok");
+  btn.disabled = true; btn.innerHTML = '<span class="spin"></span> Insertando...';
+  const rows = PERSONAL.map(nombre => ({
+    nombre, rol:"", partner:"", zona:"",
+    lunes:"N", martes:"N", miercoles:"N", jueves:"N",
+    viernes:"N", sabado:"N", domingo:"N", comentario:""
+  }));
+  const { error } = await sb.from("asistencia").insert(rows);
+  btn.disabled = false; btn.textContent = "Insertar 26 personas";
+  closeModal("modal-preload");
+  if (error) toast("Error: " + error.message, "err");
+  else { toast(`${PERSONAL.length} personas insertadas ✓`, "ok"); await fetchData(); }
+}
+
+// ══════════════════════════════════════
+// EXPORT EXCEL
+// ══════════════════════════════════════
 function exportExcel() {
+  if (!allData.length) { toast("No hay datos para exportar", "warn"); return; }
   const headers = ["Rol","Partner","Nombre","Zona","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado","Domingo","Comentario"];
   const rows = allData.map(r => [
-    r.rol, r.partner, r.nombre, r.zona,
-    r.lunes, r.martes, r.miercoles, r.jueves,
-    r.viernes, r.sabado, r.domingo, r.comentario
+    r.rol||"", r.partner||"", r.nombre||"", r.zona||"",
+    r.lunes||"N", r.martes||"N", r.miercoles||"N", r.jueves||"N",
+    r.viernes||"N", r.sabado||"N", r.domingo||"N", r.comentario||""
   ]);
-
-  // Build TSV (tab-separated — opens cleanly in Excel)
-  const tsv = [headers, ...rows]
-    .map(row => row.map(cell => String(cell || "").replace(/\t/g," ")).join("\t"))
-    .join("\n");
-
-  const bom = "\uFEFF"; // UTF-8 BOM for Excel
-  const blob = new Blob([bom + tsv], { type: "text/tab-separated-values;charset=utf-8" });
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = `asistencia_${new Date().toISOString().slice(0,10)}.xls`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(a.href);
+  const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+  ws["!cols"] = [10,14,30,14,7,7,7,7,7,7,7,30].map(w => ({wch:w}));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Asistencia");
+  XLSX.writeFile(wb, `asistencia_${new Date().toISOString().slice(0,10)}.xlsx`);
   toast("Exportado correctamente", "ok");
 }
 
-// ─── REALTIME ─────────────────────────────────────────
+// ══════════════════════════════════════
+// IMPORT EXCEL
+// ══════════════════════════════════════
+async function importExcel(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    try {
+      const wb   = XLSX.read(e.target.result, { type: "array" });
+      const ws   = wb.Sheets[wb.SheetNames[0]];
+      const raw  = XLSX.utils.sheet_to_json(ws, { header: 1 });
+      if (raw.length < 2) { toast("El archivo está vacío", "warn"); return; }
+
+      const hdrs = raw[0].map(h => String(h||"").toLowerCase().trim());
+      const col  = names => { for (const n of names) { const i = hdrs.indexOf(n); if (i !== -1) return i; } return -1; };
+      const get  = (r, names, fb="") => { const i = col(names); return (i !== -1 && r[i] !== undefined && r[i] !== "") ? String(r[i]).trim() : fb; };
+      const day  = (r, names) => { const v = get(r, names, "N").toUpperCase(); return ["Y","N","L"].includes(v) ? v : "N"; };
+
+      const rows = [];
+      for (let i = 1; i < raw.length; i++) {
+        const r = raw[i];
+        if (!r || r.every(c => !c)) continue;
+        rows.push({
+          nombre:    get(r,["nombre","name"]),
+          rol:       get(r,["rol","role"]),
+          partner:   get(r,["partner"]),
+          zona:      get(r,["zona","zone"]),
+          lunes:     day(r,["lunes","l","lun"]),
+          martes:    day(r,["martes","m","mar"]),
+          miercoles: day(r,["miercoles","miércoles","mi","mie"]),
+          jueves:    day(r,["jueves","j","jue"]),
+          viernes:   day(r,["viernes","v","vie"]),
+          sabado:    day(r,["sabado","sábado","s","sab"]),
+          domingo:   day(r,["domingo","d","dom"]),
+          comentario:get(r,["comentario","comment","comments"])
+        });
+      }
+      if (!rows.length) { toast("No se encontraron filas válidas", "warn"); return; }
+      const { error } = await sb.from("asistencia").insert(rows);
+      if (error) toast("Error al importar: " + error.message, "err");
+      else { toast(`${rows.length} registros importados ✓`, "ok"); await fetchData(); }
+    } catch(err) {
+      toast("Error al leer archivo: " + err.message, "err");
+    }
+  };
+  reader.readAsArrayBuffer(file);
+  event.target.value = "";
+}
+
+// ══════════════════════════════════════
+// REALTIME
+// ══════════════════════════════════════
 function startRealtime() {
-  sb.channel("asistencia-changes")
+  sb.channel("asistencia-live")
     .on("postgres_changes", { event: "*", schema: "public", table: "asistencia" }, () => {
       fetchData();
     })
-    .subscribe((status) => {
-      if (status === "SUBSCRIBED") {
-        console.log("Realtime conectado");
-      }
-    });
+    .subscribe();
 }
 
-// ─── INIT ─────────────────────────────────────────────
+// INIT
 fetchData();
 startRealtime();
 </script>
