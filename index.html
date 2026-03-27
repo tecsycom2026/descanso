@@ -110,21 +110,37 @@ async function deleteRow(id) {
 }
 
 async function addRow() {
-  await supabase.from("asistencia").insert([{
+  const { error } = await supabase.from("asistencia").insert([{
     nombre: "Nuevo",
     rol: "",
     partner: "",
     zona: ""
   }]);
+
+  console.log("ERROR INSERT:", error);
+
+  if (error) {
+    alert(error.message);
+  }
 }
 
 function exportExcel(){
-  let table = document.querySelector("table").outerHTML;
-  let blob = new Blob([table], { type: "application/vnd.ms-excel" });
-  let a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = "asistencia.xls";
-  a.click();
+  try {
+    let table = document.querySelector("table").outerHTML;
+
+    let blob = new Blob([table], { type: "application/vnd.ms-excel" });
+
+    let a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "asistencia.xls";
+
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+
+  } catch(e) {
+    console.log("ERROR EXPORT:", e);
+  }
 }
 
 function realtime() {
