@@ -2,159 +2,659 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Control de Asistencia</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Exo+2:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #020a14;
+      --bg2: #04111f;
+      --panel: #071828;
+      --panel2: #0a2035;
+      --accent: #00d4ff;
+      --accent2: #0066cc;
+      --danger: #ff4444;
+      --success: #00c46a;
+      --warning: #ff9500;
+      --text: #c8e0f4;
+      --text-dim: #5a7a99;
+      --border: rgba(0,212,255,0.12);
+      --glow: 0 0 20px rgba(0,212,255,0.25);
+    }
+
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Exo 2', sans-serif;
+      font-weight: 300;
+      min-height: 100vh;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(0,212,255,0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,212,255,0.02) 1px, transparent 1px);
+      background-size: 50px 50px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* HEADER */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: rgba(2, 10, 20, 0.92);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .header-title {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      color: #fff;
+    }
+
+    .header-title span { color: var(--accent); text-shadow: var(--glow); }
+
+    .header-actions {
+      display: flex;
+      gap: 0.6rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    /* STATUS */
+    #status {
+      font-size: 0.7rem;
+      letter-spacing: 0.15em;
+      padding: 0.3rem 0.8rem;
+      border-radius: 2px;
+      text-transform: uppercase;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    #status::before {
+      content: '';
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--text-dim);
+      flex-shrink: 0;
+    }
+
+    #status.connected { color: var(--success); border: 1px solid rgba(0,196,106,0.3); }
+    #status.connected::before { background: var(--success); box-shadow: 0 0 8px var(--success); animation: blink 2s infinite; }
+    #status.error { color: var(--danger); border: 1px solid rgba(255,68,68,0.3); }
+    #status.error::before { background: var(--danger); }
+    #status.loading { color: var(--text-dim); border: 1px solid var(--border); }
+
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+    /* BUTTONS */
+    .btn {
+      font-family: 'Rajdhani', sans-serif;
+      font-weight: 600;
+      font-size: 0.8rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 0.5rem 1.1rem;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
+    }
+
+    .btn-add { background: var(--accent); color: var(--bg); }
+    .btn-add:hover { box-shadow: var(--glow); transform: translateY(-1px); }
+
+    .btn-export { background: var(--panel2); color: var(--text); border: 1px solid var(--border); clip-path: none; }
+    .btn-export:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* FILTERS */
+    .filters {
+      position: relative;
+      z-index: 2;
+      padding: 0.8rem 2rem;
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      gap: 0.8rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .filter-label {
+      font-size: 0.65rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+    }
+
+    .filter-input {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 0.4rem 0.8rem;
+      font-family: 'Exo 2', sans-serif;
+      font-size: 0.82rem;
+      outline: none;
+      transition: border-color 0.2s;
+      min-width: 160px;
+    }
+
+    .filter-input:focus { border-color: var(--accent); }
+    .filter-input::placeholder { color: var(--text-dim); }
+
+    /* MAIN */
+    main {
+      position: relative;
+      z-index: 2;
+      padding: 1.5rem 2rem;
+    }
+
+    /* SUMMARY BAR */
+    .summary-bar {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1.2rem;
+      flex-wrap: wrap;
+    }
+
+    .summary-chip {
+      font-size: 0.7rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      background: var(--panel);
+      border: 1px solid var(--border);
+      padding: 0.35rem 0.8rem;
+    }
+
+    .summary-chip strong { color: var(--accent); font-family: 'Rajdhani', sans-serif; font-size: 1rem; margin-right: 0.3rem; }
+
+    /* TABLE WRAPPER */
+    .table-wrap {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.82rem;
+    }
+
+    thead tr {
+      background: var(--panel2);
+      border-bottom: 1px solid var(--border);
+    }
+
+    th {
+      font-family: 'Rajdhani', sans-serif;
+      font-weight: 600;
+      font-size: 0.7rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      padding: 0.75rem 0.6rem;
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    th.day-th {
+      text-align: center;
+      color: var(--accent);
+      min-width: 44px;
+    }
+
+    tbody tr {
+      border-bottom: 1px solid rgba(0,212,255,0.05);
+      transition: background 0.15s;
+    }
+
+    tbody tr:hover { background: rgba(0,212,255,0.03); }
+
+    td {
+      padding: 0.35rem 0.4rem;
+      vertical-align: middle;
+    }
+
+    /* CELL INPUTS */
+    .cell-input {
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text);
+      padding: 0.3rem 0.5rem;
+      font-family: 'Exo 2', sans-serif;
+      font-size: 0.82rem;
+      width: 100%;
+      min-width: 80px;
+      outline: none;
+      transition: border-color 0.2s, background 0.2s;
+    }
+
+    .cell-input:focus, .cell-input:hover {
+      border-color: var(--border);
+      background: var(--panel2);
+    }
+
+    /* DAY SELECT */
+    .day-cell {
+      text-align: center;
+      padding: 0.2rem;
+    }
+
+    .day-select {
+      appearance: none;
+      border: none;
+      font-family: 'Rajdhani', sans-serif;
+      font-weight: 700;
+      font-size: 0.82rem;
+      letter-spacing: 0.05em;
+      cursor: pointer;
+      padding: 0.3rem 0.5rem;
+      border-radius: 2px;
+      width: 48px;
+      text-align: center;
+      transition: all 0.15s;
+      outline: none;
+    }
+
+    .day-Y { background: rgba(0,196,106,0.15); color: #00e07a; border: 1px solid rgba(0,196,106,0.3); }
+    .day-N { background: rgba(255,68,68,0.1); color: #ff6666; border: 1px solid rgba(255,68,68,0.2); }
+    .day-L { background: rgba(255,149,0,0.1); color: #ffaa33; border: 1px solid rgba(255,149,0,0.2); }
+
+    /* DELETE BTN */
+    .btn-del {
+      background: transparent;
+      border: 1px solid rgba(255,68,68,0.3);
+      color: var(--danger);
+      padding: 0.25rem 0.5rem;
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: 'Rajdhani', sans-serif;
+      letter-spacing: 0.05em;
+    }
+    .btn-del:hover { background: rgba(255,68,68,0.15); border-color: var(--danger); }
+
+    /* SAVE indicator */
+    .saving { opacity: 0.5; }
+
+    /* EMPTY STATE */
+    .empty-state {
+      text-align: center;
+      padding: 4rem 2rem;
+      color: var(--text-dim);
+    }
+    .empty-state svg { opacity: 0.2; margin-bottom: 1rem; }
+    .empty-state p { font-size: 0.85rem; letter-spacing: 0.1em; }
+
+    /* TOAST */
+    #toast {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      z-index: 999;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 0.85rem;
+      letter-spacing: 0.1em;
+      padding: 0.7rem 1.2rem;
+      border-left: 3px solid var(--accent);
+      background: var(--panel2);
+      color: var(--text);
+      opacity: 0;
+      transform: translateY(10px);
+      transition: all 0.3s;
+      pointer-events: none;
+      max-width: 320px;
+    }
+    #toast.show { opacity: 1; transform: translateY(0); }
+    #toast.toast-ok { border-color: var(--success); color: var(--success); }
+    #toast.toast-err { border-color: var(--danger); color: var(--danger); }
+
+    /* SPINNER */
+    .spinner {
+      width: 16px; height: 16px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      display: inline-block;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
 </head>
+<body>
 
-<body class="bg-gray-100">
-
-<div class="p-4">
-  <h1 class="text-2xl font-bold mb-4">Control de Asistencia</h1>
-
-  <div class="flex gap-2 mb-4">
-    <button onclick="addRow()" class="bg-green-500 text-white px-4 py-2 rounded">➕ Agregar</button>
-    <button onclick="exportExcel()" class="bg-indigo-500 text-white px-4 py-2 rounded">📥 Exportar</button>
+<header>
+  <div class="header-title">CONTROL DE <span>ASISTENCIA</span></div>
+  <div class="header-actions">
+    <span id="status" class="loading">Conectando...</span>
+    <button class="btn btn-export" onclick="exportExcel()">📥 Exportar XLS</button>
+    <button class="btn btn-add" onclick="addRow()">➕ Agregar</button>
   </div>
+</header>
 
-  <div class="overflow-x-auto bg-white rounded-xl shadow">
-    <table class="min-w-full text-sm">
-      <thead class="bg-gray-200">
-        <tr>
-          <th class="p-2">Rol</th>
-          <th class="p-2">Partner</th>
-          <th class="p-2">Nombre</th>
-          <th class="p-2">Zona</th>
-          <th>L</th>
-          <th>M</th>
-          <th>Mi</th>
-          <th>J</th>
-          <th>V</th>
-          <th>S</th>
-          <th>D</th>
-          <th>Comentario</th>
-          <th>Acciones</th>
-        </tr>
-      </thead>
-      <tbody id="tabla"></tbody>
-    </table>
-  </div>
+<div class="filters">
+  <span class="filter-label">Filtrar:</span>
+  <input class="filter-input" id="f-nombre" placeholder="Nombre..." oninput="applyFilters()">
+  <input class="filter-input" id="f-partner" placeholder="Partner..." oninput="applyFilters()">
+  <input class="filter-input" id="f-zona" placeholder="Zona..." oninput="applyFilters()">
+  <input class="filter-input" id="f-rol" placeholder="Rol..." oninput="applyFilters()">
 </div>
 
+<main>
+  <div class="summary-bar" id="summary"></div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Rol</th>
+          <th>Partner</th>
+          <th>Nombre</th>
+          <th>Zona</th>
+          <th class="day-th">L</th>
+          <th class="day-th">M</th>
+          <th class="day-th">Mi</th>
+          <th class="day-th">J</th>
+          <th class="day-th">V</th>
+          <th class="day-th">S</th>
+          <th class="day-th">D</th>
+          <th>Comentario</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="tabla">
+        <tr><td colspan="13"><div class="empty-state"><div class="spinner"></div></div></td></tr>
+      </tbody>
+    </table>
+  </div>
+</main>
+
+<div id="toast"></div>
+
 <script>
-const supabase = window.supabase.createClient(
+const { createClient } = supabase;
+const sb = createClient(
   "https://jxpeztieqwotfgswhzhx.supabase.co",
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4cGV6dGllcXdvdGZnc3doemh4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA4MzQ4MDQsImV4cCI6MjA4NjQxMDgwNH0.Hf-lbGlP2OmH7Uh2LNKqwHkwHDp7yQV6O73aXw5NCZk"
 );
 
-const dias = ["lunes","martes","miercoles","jueves","viernes","sabado","domingo"];
+const DIAS = ["lunes","martes","miercoles","jueves","viernes","sabado","domingo"];
+const DIAS_LABEL = ["L","M","Mi","J","V","S","D"];
 
-function escapeHtml(text) {
-  return (text || "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
+let allData = [];
+let saveTimers = {};
+
+// ─── TOAST ───────────────────────────────────────────
+function toast(msg, type = "ok") {
+  const el = document.getElementById("toast");
+  el.textContent = msg;
+  el.className = `show toast-${type}`;
+  clearTimeout(window._toastTimer);
+  window._toastTimer = setTimeout(() => el.className = "", 3000);
 }
 
+// ─── ESCAPE ───────────────────────────────────────────
+function esc(t) {
+  return String(t || "")
+    .replace(/&/g,"&amp;").replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+
+// ─── FETCH ────────────────────────────────────────────
 async function fetchData() {
-  const { data, error } = await supabase.from("asistencia").select("*").order("nombre");
-  console.log("DATA:", data);
-  console.log("ERROR:", error);
-  if (!data) return;
-  render(data);
+  setStatus("loading", "Cargando...");
+  const { data, error } = await sb.from("asistencia").select("*").order("nombre");
+  if (error) {
+    setStatus("error", "Error de conexión");
+    toast("Error: " + error.message, "err");
+    document.getElementById("tabla").innerHTML =
+      `<tr><td colspan="13"><div class="empty-state"><p>No se pudo conectar con Supabase</p></div></td></tr>`;
+    return;
+  }
+  allData = data || [];
+  setStatus("connected", `En línea · ${allData.length} registros`);
+  applyFilters();
 }
 
+// ─── STATUS ───────────────────────────────────────────
+function setStatus(type, msg) {
+  const el = document.getElementById("status");
+  el.className = type;
+  el.textContent = msg;
+}
+
+// ─── RENDER ───────────────────────────────────────────
 function render(data) {
-  const tabla = document.getElementById("tabla");
-  tabla.innerHTML = "";
+  const tbody = document.getElementById("tabla");
+
+  // Summary
+  const total = data.length;
+  const presentes = data.reduce((acc, r) =>
+    acc + DIAS.filter(d => r[d] === "Y").length, 0);
+  const ausentes = data.reduce((acc, r) =>
+    acc + DIAS.filter(d => r[d] === "N").length, 0);
+
+  document.getElementById("summary").innerHTML = `
+    <div class="summary-chip"><strong>${total}</strong> Personas</div>
+    <div class="summary-chip"><strong>${presentes}</strong> Asistencias</div>
+    <div class="summary-chip"><strong>${ausentes}</strong> Ausencias</div>
+  `;
+
+  if (data.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="13"><div class="empty-state"><p>Sin registros. Usa "Agregar" para crear uno.</p></div></td></tr>`;
+    return;
+  }
+
+  const fragment = document.createDocumentFragment();
 
   data.forEach(row => {
+    const tr = document.createElement("tr");
+    tr.dataset.id = row.id;
 
-    let tr = `<tr class='border hover:bg-gray-50'>
-      <td><input value="${escapeHtml(row.rol)}" onchange="updateField('${row.id}','rol',this.value)"></td>
-      <td><input value="${escapeHtml(row.partner)}" onchange="updateField('${row.id}','partner',this.value)"></td>
-      <td><input value="${escapeHtml(row.nombre)}" onchange="updateField('${row.id}','nombre',this.value)"></td>
-      <td><input value="${escapeHtml(row.zona)}" onchange="updateField('${row.id}','zona',this.value)"></td>
-    `;
-
-    dias.forEach(dia => {
-      const val = row[dia] || 'N';
-      const color = val === 'Y' ? 'bg-green-200' : 'bg-red-200';
-
-      tr += `
-      <td class='${color}'>
-        <select onchange="updateField('${row.id}','${dia}',this.value)">
-          <option value="Y" ${val==='Y'?'selected':''}>Y</option>
-          <option value="N" ${val==='N'?'selected':''}>N</option>
-        </select>
-      </td>`;
+    // Text fields
+    const textFields = ["rol","partner","nombre","zona"];
+    textFields.forEach(field => {
+      const td = document.createElement("td");
+      const inp = document.createElement("input");
+      inp.className = "cell-input";
+      inp.value = row[field] || "";
+      inp.placeholder = field.charAt(0).toUpperCase() + field.slice(1);
+      inp.addEventListener("input", () => scheduleUpdate(row.id, field, inp.value, tr));
+      td.appendChild(inp);
+      tr.appendChild(td);
     });
 
-    tr += `
-      <td class='relative group'>
-        <input value="${escapeHtml(row.comentario)}" onchange="updateField('${row.id}','comentario',this.value)">
-        ${row.comentario ? `<div class='absolute hidden group-hover:block bg-black text-white text-xs p-2 rounded -top-10'>${escapeHtml(row.comentario)}</div>` : ''}
-      </td>
+    // Day selects
+    DIAS.forEach(dia => {
+      const val = row[dia] || "N";
+      const td = document.createElement("td");
+      td.className = "day-cell";
+      const sel = document.createElement("select");
+      sel.className = `day-select day-${val}`;
 
-      <td>
-        <button onclick="deleteRow('${row.id}')" class="bg-red-500 text-white px-2 py-1 rounded">❌</button>
-      </td>
-    </tr>`;
+      ["Y","N","L"].forEach(opt => {
+        const o = document.createElement("option");
+        o.value = opt;
+        o.textContent = opt;
+        if (opt === val) o.selected = true;
+        sel.appendChild(o);
+      });
 
-    tabla.innerHTML += tr;
+      sel.addEventListener("change", () => {
+        sel.className = `day-select day-${sel.value}`;
+        scheduleUpdate(row.id, dia, sel.value, tr);
+      });
+
+      td.appendChild(sel);
+      tr.appendChild(td);
+    });
+
+    // Comentario
+    const tdCom = document.createElement("td");
+    const inpCom = document.createElement("input");
+    inpCom.className = "cell-input";
+    inpCom.style.minWidth = "140px";
+    inpCom.value = row.comentario || "";
+    inpCom.placeholder = "Comentario...";
+    inpCom.addEventListener("input", () => scheduleUpdate(row.id, "comentario", inpCom.value, tr));
+    tdCom.appendChild(inpCom);
+    tr.appendChild(tdCom);
+
+    // Delete
+    const tdDel = document.createElement("td");
+    const btn = document.createElement("button");
+    btn.className = "btn-del";
+    btn.textContent = "✕";
+    btn.title = "Eliminar";
+    btn.addEventListener("click", () => deleteRow(row.id, tr));
+    tdDel.appendChild(btn);
+    tr.appendChild(tdDel);
+
+    fragment.appendChild(tr);
   });
+
+  tbody.innerHTML = "";
+  tbody.appendChild(fragment);
 }
 
-async function updateField(id, field, value) {
-  await supabase.from("asistencia").update({ [field]: value }).eq("id", id);
+// ─── DEBOUNCED UPDATE ─────────────────────────────────
+function scheduleUpdate(id, field, value, tr) {
+  const key = `${id}-${field}`;
+  clearTimeout(saveTimers[key]);
+  tr.classList.add("saving");
+  saveTimers[key] = setTimeout(async () => {
+    const { error } = await sb.from("asistencia").update({ [field]: value }).eq("id", id);
+    tr.classList.remove("saving");
+    if (error) {
+      toast("Error al guardar: " + error.message, "err");
+    }
+    // Update local cache
+    const idx = allData.findIndex(r => r.id === id);
+    if (idx !== -1) allData[idx][field] = value;
+  }, 600);
 }
 
-async function deleteRow(id) {
-  if(confirm("¿Eliminar registro?")){
-    await supabase.from("asistencia").delete().eq("id", id);
-  }
-}
-
+// ─── ADD ROW ──────────────────────────────────────────
 async function addRow() {
-  const { error } = await supabase.from("asistencia").insert([{
-    nombre: "Nuevo",
-    rol: "",
-    partner: "",
-    zona: ""
+  const btn = document.querySelector(".btn-add");
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>';
+
+  const { error } = await sb.from("asistencia").insert([{
+    nombre: "Nuevo", rol: "", partner: "", zona: "",
+    lunes:"N", martes:"N", miercoles:"N", jueves:"N",
+    viernes:"N", sabado:"N", domingo:"N", comentario:""
   }]);
 
-  console.log("ERROR INSERT:", error);
-  if (error) alert(error.message);
-}
+  btn.disabled = false;
+  btn.innerHTML = "➕ Agregar";
 
-function exportExcel(){
-  try {
-    let table = document.querySelector("table").outerHTML;
-    let blob = new Blob([table], { type: "application/vnd.ms-excel" });
-    let a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = "asistencia.xls";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-  } catch(e) {
-    console.log("ERROR EXPORT:", e);
+  if (error) {
+    toast("Error al agregar: " + error.message, "err");
+  } else {
+    toast("Registro agregado", "ok");
+    await fetchData();
   }
 }
 
-function realtime() {
-  supabase.channel('asistencia')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'asistencia' }, () => {
-      fetchData();
-    })
-    .subscribe();
+// ─── DELETE ROW ───────────────────────────────────────
+async function deleteRow(id, tr) {
+  if (!confirm("¿Eliminar este registro?")) return;
+  const { error } = await sb.from("asistencia").delete().eq("id", id);
+  if (error) {
+    toast("Error al eliminar: " + error.message, "err");
+  } else {
+    allData = allData.filter(r => r.id !== id);
+    tr.remove();
+    toast("Registro eliminado", "ok");
+    applyFilters();
+  }
 }
 
-fetchData();
-realtime();
-</script>
+// ─── FILTERS ──────────────────────────────────────────
+function applyFilters() {
+  const fn = document.getElementById("f-nombre").value.toLowerCase();
+  const fp = document.getElementById("f-partner").value.toLowerCase();
+  const fz = document.getElementById("f-zona").value.toLowerCase();
+  const fr = document.getElementById("f-rol").value.toLowerCase();
 
+  const filtered = allData.filter(r =>
+    (r.nombre||"").toLowerCase().includes(fn) &&
+    (r.partner||"").toLowerCase().includes(fp) &&
+    (r.zona||"").toLowerCase().includes(fz) &&
+    (r.rol||"").toLowerCase().includes(fr)
+  );
+
+  render(filtered);
+  setStatus("connected", `En línea · ${filtered.length}/${allData.length} registros`);
+}
+
+// ─── EXPORT EXCEL ─────────────────────────────────────
+function exportExcel() {
+  const headers = ["Rol","Partner","Nombre","Zona","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado","Domingo","Comentario"];
+  const rows = allData.map(r => [
+    r.rol, r.partner, r.nombre, r.zona,
+    r.lunes, r.martes, r.miercoles, r.jueves,
+    r.viernes, r.sabado, r.domingo, r.comentario
+  ]);
+
+  // Build TSV (tab-separated — opens cleanly in Excel)
+  const tsv = [headers, ...rows]
+    .map(row => row.map(cell => String(cell || "").replace(/\t/g," ")).join("\t"))
+    .join("\n");
+
+  const bom = "\uFEFF"; // UTF-8 BOM for Excel
+  const blob = new Blob([bom + tsv], { type: "text/tab-separated-values;charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `asistencia_${new Date().toISOString().slice(0,10)}.xls`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(a.href);
+  toast("Exportado correctamente", "ok");
+}
+
+// ─── REALTIME ─────────────────────────────────────────
+function startRealtime() {
+  sb.channel("asistencia-changes")
+    .on("postgres_changes", { event: "*", schema: "public", table: "asistencia" }, () => {
+      fetchData();
+    })
+    .subscribe((status) => {
+      if (status === "SUBSCRIBED") {
+        console.log("Realtime conectado");
+      }
+    });
+}
+
+// ─── INIT ─────────────────────────────────────────────
+fetchData();
+startRealtime();
+</script>
 </body>
 </html>
