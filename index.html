@@ -1,19 +1,16 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Control Profesional de Asistencia</title>
+  <meta charset="UTF-8">
+  <title>Control de Asistencia</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
+
 <body class="bg-gray-100">
 
-<!-- APP DIRECTO SIN LOGIN -->
-<div id="app" class="p-4">
-  <div class="flex justify-between items-center mb-4">
-    <h1 class="text-2xl font-bold">Control de Asistencia</h1>
-  </div>
+<div class="p-4">
+  <h1 class="text-2xl font-bold mb-4">Control de Asistencia</h1>
 
   <div class="flex gap-2 mb-4">
     <button onclick="addRow()" class="bg-green-500 text-white px-4 py-2 rounded">➕ Agregar</button>
@@ -24,12 +21,17 @@
     <table class="min-w-full text-sm">
       <thead class="bg-gray-200">
         <tr>
+          <th class="p-2">Rol</th>
+          <th class="p-2">Partner</th>
           <th class="p-2">Nombre</th>
-          <script>
-            for (let i = 1; i <= 15; i++) {
-              document.write(`<th class='p-2'>${i}</th>`);
-            }
-          </script>
+          <th class="p-2">Zona</th>
+          <th>L</th>
+          <th>M</th>
+          <th>Mi</th>
+          <th>J</th>
+          <th>V</th>
+          <th>S</th>
+          <th>D</th>
           <th>Comentario</th>
           <th>Acciones</th>
         </tr>
@@ -40,11 +42,20 @@
 </div>
 
 <script>
-const supabase = window.supabase.createClient("https://jxpeztieqwotfgswhzhx.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4cGV6dGllcXdvdGZnc3doemh4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA4MzQ4MDQsImV4cCI6MjA4NjQxMDgwNH0.Hf-lbGlP2OmH7Uh2LNKqwHkwHDp7yQV6O73aXw5NCZk");
+const supabase = window.supabase.createClient(
+  "https://jxpeztieqwotfgswhzhx.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4cGV6dGllcXdvdGZnc3doemh4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA4MzQ4MDQsImV4cCI6MjA4NjQxMDgwNH0.Hf-lbGlP2OmH7Uh2LNKqwHkwHDp7yQV6O73aXw5NCZk"
+);
+
+const dias = ["lunes","martes","miercoles","jueves","viernes","sabado","domingo"];
 
 async function fetchData() {
-  const { data } = await supabase.from("asistencia").select("*").order("nombre");
-  render(data);
+  const { data, error } = await supabase.from("asistencia").select("*").order("nombre");
+
+  console.log("DATA:", data);
+  console.log("ERROR:", error);
+
+  render(data || []);
 }
 
 function render(data) {
@@ -52,27 +63,33 @@ function render(data) {
   tabla.innerHTML = "";
 
   data.forEach(row => {
-    let tr = `<tr class='border hover:bg-gray-50'>
-      <td class='p-1'><input class='w-full' value='${row.nombre || ""}' onchange="updateField('${row.id}','nombre',this.value)"></td>`;
 
-    for (let i = 1; i <= 15; i++) {
-      const val = row[`dia${i}`] || 'N';
+    let tr = `<tr class='border hover:bg-gray-50'>
+      <td><input value='${row.rol || ""}' onchange="updateField('${row.id}','rol',this.value)"></td>
+      <td><input value='${row.partner || ""}' onchange="updateField('${row.id}','partner',this.value)"></td>
+      <td><input value='${row.nombre || ""}' onchange="updateField('${row.id}','nombre',this.value)"></td>
+      <td><input value='${row.zona || ""}' onchange="updateField('${row.id}','zona',this.value)"></td>
+    `;
+
+    dias.forEach(dia => {
+      const val = row[dia] || 'N';
       const color = val === 'Y' ? 'bg-green-200' : 'bg-red-200';
 
       tr += `
       <td class='${color}'>
-        <select class='w-full bg-transparent' onchange="updateField('${row.id}','dia${i}',this.value)">
-          <option ${val==='Y'?'selected':''}>Y</option>
-          <option ${val==='N'?'selected':''}>N</option>
+        <select onchange="updateField('${row.id}','${dia}',this.value)">
+          <option value="Y" ${val==='Y'?'selected':''}>Y</option>
+          <option value="N" ${val==='N'?'selected':''}>N</option>
         </select>
       </td>`;
-    }
+    });
 
     tr += `
       <td class='relative group'>
-        <input class='w-full' value='${row.comentario || ""}' onchange="updateField('${row.id}','comentario',this.value)">
+        <input value='${row.comentario || ""}' onchange="updateField('${row.id}','comentario',this.value)">
         ${row.comentario ? `<div class='absolute hidden group-hover:block bg-black text-white text-xs p-2 rounded -top-10'>${row.comentario}</div>` : ''}
       </td>
+
       <td>
         <button onclick="deleteRow('${row.id}')" class="bg-red-500 text-white px-2 py-1 rounded">❌</button>
       </td>
@@ -93,15 +110,12 @@ async function deleteRow(id) {
 }
 
 async function addRow() {
-  await supabase.from("asistencia").insert([{ nombre: "Nuevo" }]);
-}
-
-function realtime() {
-  supabase.channel('asistencia')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'asistencia' }, () => {
-      fetchData();
-    })
-    .subscribe();
+  await supabase.from("asistencia").insert([{
+    nombre: "Nuevo",
+    rol: "",
+    partner: "",
+    zona: ""
+  }]);
 }
 
 function exportExcel(){
@@ -111,6 +125,14 @@ function exportExcel(){
   a.href = URL.createObjectURL(blob);
   a.download = "asistencia.xls";
   a.click();
+}
+
+function realtime() {
+  supabase.channel('asistencia')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'asistencia' }, () => {
+      fetchData();
+    })
+    .subscribe();
 }
 
 fetchData();
